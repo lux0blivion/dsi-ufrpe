@@ -137,6 +137,7 @@ export default function SelectUserType() {
     {/* Modal controlado pelo estado `activeInfo`.
     Quando um perfil é selecionado no ícone de informação,
     seu conteúdo é exibido aqui. */}
+    
     <InfoModal
       profile={activeInfo}
       fontFamily={questrial}

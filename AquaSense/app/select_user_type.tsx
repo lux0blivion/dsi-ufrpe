@@ -19,7 +19,7 @@ import { Stack, useRouter } from "expo-router";
 
 // Captura a altura da tela para garantir que o conteúdo ocupe
 // pelo menos toda área visível do dispositivo.
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+// const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // Define o formato de cada perfil exibido na tela.
 type ProfileType = {
@@ -34,7 +34,7 @@ const PROFILES: ProfileType[] = [
     {
         id: "comum",
         label:"Usuário Comum",
-        route: "/cadatro-comum",
+        route: "/cadastro-comum",
         description: "Registra observações visuais sobre a qualidade da água, como cor, odor e presença de lixo ou contaminantes. Ideal para cidadãos que querem contribuir com sua comunidade.",
     },
     {
@@ -232,16 +232,15 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        minHeight: SCREEN_HEIGHT,
         paddingHorizontal: 36,
-        paddingTop: Platform.OS === "android" ? 56 : 44,
-        paddingBottom: 48,
-        justifyContent: "space-between",
+        paddingTop: Platform.OS === "android" ? 40 : 20,
+        paddingBottom: 24,
+        justifyContent: "center",
     },
     logoSection: {
         alignItems: "center",
-        paddingTop: 40,
-        marginBottom: 12,
+        paddingTop: 10,
+        marginBottom: 10,
     },
     logoImage: {
         width: 300,
@@ -255,13 +254,13 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
         lineHeight: 22,
         maxWidth: 260,
-        marginTop: -20,
+        marginTop: -10,
     },
     profileSection: {
-        flex: 1,
+        // flex: 1,
         justifyContent: "center",
-        gap: 14,
-        paddingVertical: 20,
+        gap: 12,
+        paddingVertical: 15,
     },
     profileRow: {
         flexDirection: "row",

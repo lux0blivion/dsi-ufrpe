@@ -29,4 +29,31 @@ type ProfileType = {
 
 };
 
+const PROFILES: ProfileType[] = [
+    {
+        id: "comum",
+        label:"Usuário Comum",
+        route: "/cadatro-comum",
+        description: "Registra observações visuais sobre a qualidade da água, como cor, odor e presença de lixo ou contaminantes. Ideal para cidadãos que querem contribuir com sua comunidade.",
+    },
+    {
+        id: "colaborador",
+        label: "Usuário Colaborador",
+        route: "/cadastro-colaborador",
+        description: "Vinculado a comunidades ou iniciativas locais, contribui com observações e registros contínuos no sistema. Atua como ponte entre a população e os especialistas.",
+    },
+    {
+        id: "técnico",
+        label: "Equipe Técnica",
+        route: "/cadastro-tecnico",
+        description: "Responsável por análises técnicas detalhadas, acompanhamento de dados e validações especializadas. Utiliza ferramentas avançadas de monitoramento",
+        
+    },
+    {
+        id: "gestor",
+        label: "Usuário Gestor",
+        route: "/cadastro-gestor",
+        description: "Responsável pelo monitoramento geral, visualização de informações estratégicas e suporte à tomada de decisão em nível institucional ou municipal.",
+    },
+];
 

@@ -6,13 +6,13 @@ import {
     StyleSheet,
     Modal,
     ScrollView,
-    SafeAreaView,
     StatusBar,
     Pressable,
     Platform,
     Image,
     Dimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Questrial_400Regular } from "@expo-google-fonts/questrial";
 import { Stack, useRouter } from "expo-router";

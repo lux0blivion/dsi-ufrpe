@@ -146,3 +146,40 @@ export default function SelectUserType() {
     );
 }
 
+type ProfileRowProps = {
+    profile: ProfileType;
+    fontFamily?: string | undefined;
+    onSelect: () => void;
+    onInfo: () => void;
+};
+
+function ProfileRow({ profile, fontFamily, onSelect, onInfo }: ProfileRowProps) {
+    return (
+        <View style={styles.profileRow}>
+            <TouchableOpacity
+                style={styles.profileButton}
+                onPress={onSelect}
+                activeOpacity={0.82}
+            >
+                <Text style={[StyleSheet.profileButtonText, { fontFamily }]}>
+                    {profile.label}
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={StyleSheet.infoIconButton}
+                onPress={onInfo}
+                hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+                activeOpacity={0.7}
+            >
+                <View style={styles.infoIconCircle}>
+                    <Text style={styles.infoIconText}>i</Text>
+                </View>
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+
+
+
+

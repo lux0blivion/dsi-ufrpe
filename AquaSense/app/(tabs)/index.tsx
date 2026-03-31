@@ -1,12 +1,30 @@
-import { Redirect } from "expo-router";
+// app/(tabs)/index.tsx
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
-/**
- * Garante o redirecionamento para /select_user_type também dentro das tabs,
- * pois no Android o app ainda acessava essa rota mesmo com o Redirect em app/index.tsx.
- * 
- */
-
-
-export default function TabsIndex() {
-  return <Redirect href="/select_user_type" />;
+export default function TabHome() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>AquaSense</Text>
+      <Text style={styles.subtitle}>em desenvolvimento</Text>
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 8,
+  },
+});

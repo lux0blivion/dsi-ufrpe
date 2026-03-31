@@ -6,7 +6,6 @@ import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 
 // Configurações Iniciais Temporárias
-
 const REGIAO_INICIAL = {
   latitude: -8.28,
   longitude: -37.95,
@@ -47,11 +46,14 @@ const COR_STATUS: Record<string, string> = {
 export default function MapaScreen() {
   const [pontoSelecionado, setPontoSelecionado] = useState<string | null>(null);
 
+  // Define o provedor dinamicamente: Google para Android, Padrão (Apple) para iOS
+  const mapProvider = Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+
   return (
     <View style={styles.container}>
       <MapView
         style={styles.mapa}
-        provider={PROVIDER_GOOGLE}
+        provider={mapProvider}
         initialRegion={REGIAO_INICIAL}
         showsUserLocation
         showsMyLocationButton

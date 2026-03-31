@@ -53,8 +53,9 @@ export default function MapaScreen() {
     <View style={styles.container}>
       <MapView
         style={styles.mapa}
-        provider={mapProvider}
+        provider={PROVIDER_GOOGLE}
         initialRegion={REGIAO_INICIAL}
+        mapType="hybrid"
         showsUserLocation
         showsMyLocationButton
       >

@@ -1,3 +1,5 @@
+const { config } = require('dotenv');
+
 require('dotenv').config();
 
 module.exports = {
@@ -12,7 +14,10 @@ module.exports = {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.pablonvsx.aquasense"
+      bundleIdentifier: "com.pablonvsx.aquasense",
+      config: {
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY
+      }
     },
     android: {
       package: "com.pablonvsx.aquasense",

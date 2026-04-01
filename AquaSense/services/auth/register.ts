@@ -5,7 +5,7 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
 
-export interface RegisterCommonpayload {
+export interface RegisterCommonPayload {
     nome: string;
     email: string;
     cidade: string;
@@ -28,7 +28,7 @@ export async function registerCommonUser(
     await setDoc(doc(db, "usuarios", uid), {
         uid,
         nome: nome.trim(),
-        email: email.toLoweCase().trim(),
+        email: email.toLowerCase().trim(),
         cidade,
         tipoUsuario: "comum",
         statusConta: "pendente_verificacao",

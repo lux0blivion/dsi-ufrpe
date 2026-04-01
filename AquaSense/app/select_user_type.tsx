@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     View,
     Text,
@@ -10,141 +10,166 @@ import {
     Pressable,
     Platform,
     Image,
-    Dimensions,
+    Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Questrial_400Regular } from "@expo-google-fonts/questrial";
 import { Stack, useRouter } from "expo-router";
 
-// Captura a altura da tela para garantir que o conteúdo ocupe
-// pelo menos toda área visível do dispositivo.
-// const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-// Define o formato de cada perfil exibido na tela.
 type ProfileType = {
     id: string;
     label: string;
     route: string;
     description: string;
-
 };
 
 const PROFILES: ProfileType[] = [
     {
         id: "comum",
-        label:"Usuário Comum",
+        label: "Usuário Comum",
         route: "/register_common",
-        description: "Registra observações visuais sobre a qualidade da água, como cor, odor e presença de lixo ou contaminantes. Ideal para cidadãos que querem contribuir com sua comunidade.",
+        description:
+            "Registra observações visuais sobre a qualidade da água, como cor, odor e presença de lixo ou contaminantes. Ideal para cidadãos que querem contribuir com sua comunidade.",
     },
     {
         id: "colaborador",
         label: "Usuário Colaborador",
         route: "/cadastro-colaborador",
-        description: "Vinculado a comunidades ou iniciativas locais, contribui com observações e registros contínuos no sistema. Atua como ponte entre a população e os especialistas.",
+        description:
+            "Vinculado a comunidades ou iniciativas locais, contribui com observações e registros contínuos no sistema. Atua como ponte entre a população e os especialistas.",
     },
     {
         id: "técnico",
         label: "Equipe Técnica",
         route: "/cadastro-tecnico",
-        description: "Responsável por análises técnicas detalhadas, acompanhamento de dados e validações especializadas. Utiliza ferramentas avançadas de monitoramento",
-        
+        description:
+            "Responsável por análises técnicas detalhadas, acompanhamento de dados e validações especializadas. Utiliza ferramentas avançadas de monitoramento",
     },
     {
         id: "gestor",
         label: "Usuário Gestor",
         route: "/cadastro-gestor",
-        description: "Responsável pelo monitoramento geral, visualização de informações estratégicas e suporte à tomada de decisão em nível institucional ou municipal.",
+        description:
+            "Responsável pelo monitoramento geral, visualização de informações estratégicas e suporte à tomada de decisão em nível institucional ou municipal.",
     },
 ];
 
-// Componente principal da tela de seleção de perfil. 
-// Aqui ficam concentradas a navegação, o controle do modal
-// e a renderização da estrutura central da interface.
 export default function SelectUserType() {
     const router = useRouter();
     const [activeInfo, setActiveInfo] = useState<ProfileType | null>(null);
 
-    // Carrega a fonte personalizada para o aplicativo.
+    // Animação de entrada dos botões (slide + fade)
+    const headerfadeAnim = useRef(new Animated.Value(0)).current;
+    const headertranslateAnim = useRef(new Animated.Value(-20)).current;
+
+    
+    
+
+    useEffect(() => {
+        // Entrada dos elementos
+        Animated.parallel([
+            Animated.timing(headerfadeAnim, {
+                toValue: 1,
+                duration: 700,
+                useNativeDriver: true,
+            }),
+            Animated.timing(headertranslateAnim, {
+                toValue: 0,
+                duration: 700,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+    }, [headerfadeAnim, headertranslateAnim]);
+
     const [fontsLoaded] = useFonts({
         Questrial_400Regular,
     });
     const questrial = fontsLoaded ? "Questrial_400Regular" : undefined;
 
     return (
-<>
-<Stack.Screen options={{ headerShown: false }} />
-  <SafeAreaView style={styles.safeArea}>
-    <StatusBar
-      barStyle="light-content"
-      translucent
-      backgroundColor="transparent"
-    />
+        <>
+            <Stack.Screen options={{ headerShown: false }} />
+            <SafeAreaView style={styles.safeArea}>
+                <StatusBar
+                    barStyle="light-content"
+                    translucent
+                    backgroundColor="transparent"
+                />
 
-    <LinearGradient
-      colors={["#004d48", "#3ff3e7"]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={StyleSheet.absoluteFillObject}
-    />
+                <LinearGradient
+                    colors={["#004d48", "#3ff3e7"]}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
+                    style={StyleSheet.absoluteFillObject}
+                />
 
-    <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      bounces={false}
-      
-    > 
-      <View style={styles.logoSection}>
-        <Image
-          source={require("../assets/images/aquasense-logo.png")}
-          style={styles.logoImage}
-          resizeMode="contain"
-          tintColor="#FFFFFF"
-        />
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Logo com animação de escala/respiração */}
+                    <Animated.View
+                        style={[
+                            styles.logoSection,
+                            {
+                                opacity: headerfadeAnim,
+                                transform: [{ translateY: headertranslateAnim }],
+                            },
+                            
+                        ]}
+                    >
+                        <Image
+                            source={require("../assets/images/aquasense-logo.png")}
+                            style={styles.logoImage}
+                            resizeMode="contain"
+                            tintColor="#FFFFFF"
+                        />
 
-        <Text style={[styles.supportText, { fontFamily: questrial }]}>
-          Selecione o perfil que melhor representa você
-        </Text>
-      </View>
-        
-      <View style={styles.profileSection}>
-        {PROFILES.map((profile) => (
-          <ProfileRow
-            key={profile.id}
-            profile={profile}
-            fontFamily={questrial}
-            onSelect={() => router.push(profile.route as any)}
-            onInfo={() => setActiveInfo(profile)}
-          />
-        ))}
-      </View>
+                        <Text style={[styles.supportText, { fontFamily: questrial }]}>
+                            Selecione o perfil que melhor representa você
+                        </Text>
+                    </Animated.View>
 
-      <View style={styles.footer}>
-        <Text style={[styles.footerText, { fontFamily: questrial }]}>
-          Já tem uma conta?{" "}
-        </Text>
-        <TouchableOpacity
-          onPress={() => router.push("/login" as any)}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.footerLink, { fontFamily: questrial }]}>
-            Entrar
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+                    {/* Botões com animação de entrada (fade + slide-up) */}
+                    <View style={styles.profileSection}>
+                        {PROFILES.map((profile) => (
+                            <ProfileRow
+                                key={profile.id}
+                                profile={profile}
+                                fontFamily={questrial}
+                                onSelect={() => router.push(profile.route as any)}
+                                onInfo={() => setActiveInfo(profile)}
+                            />
+                        ))}
+                    </View>
 
-    {/* Modal controlado pelo estado `activeInfo`.
-    Quando um perfil é selecionado no ícone de informação,
-    seu conteúdo é exibido aqui. */}
-    
-    <InfoModal
-      profile={activeInfo}
-      fontFamily={questrial}
-      onClose={() => setActiveInfo(null)}
-    />
-  </SafeAreaView>
-</>
+                    <View style={styles.footer}>
+                    
+                        <Text style={[styles.footerText, { fontFamily: questrial }]}>
+                            Já tem uma conta?{" "}
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => router.push("/login" as any)}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={[styles.footerLink, { fontFamily: questrial }]}>
+                                Entrar
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+
+                <InfoModal
+                    profile={activeInfo}
+                    fontFamily={questrial}
+                    onClose={() => setActiveInfo(null)}
+                />
+            </SafeAreaView>
+        </>
     );
 }
 
@@ -205,7 +230,7 @@ function InfoModal({ profile, fontFamily, onClose }: InfoModalProps) {
                             <Text style={[styles.modalTitle, { fontFamily }]}>
                                 {profile.label}
                             </Text>
-                            <View style={styles.modalDivider} /> 
+                            <View style={styles.modalDivider} />
                             <Text style={[styles.modalDescription, { fontFamily }]}>
                                 {profile.description}
                             </Text>
@@ -231,6 +256,10 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#004d48",
     },
+    scrollView: {
+        flex: 1,
+    },
+
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 36,
@@ -258,7 +287,6 @@ const styles = StyleSheet.create({
         marginTop: -10,
     },
     profileSection: {
-        // flex: 1,
         justifyContent: "center",
         gap: 12,
         paddingVertical: 15,
@@ -280,7 +308,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.10,
+        shadowOpacity: 0.1,
         shadowRadius: 6,
         elevation: 3,
     },
@@ -369,7 +397,6 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         paddingVertical: 14,
         alignItems: "center",
-
     },
     modalButtonText: {
         fontSize: 15,
@@ -378,11 +405,3 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
     },
 });
-
-
-
-
-
-
-
-

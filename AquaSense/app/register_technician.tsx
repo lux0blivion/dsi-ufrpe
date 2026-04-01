@@ -33,7 +33,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-export default function CadastroTecnico() {
+export default function registerTechnician() {
     const router = useRouter();
 
     // Estados para os campos do cadastro
@@ -46,7 +46,7 @@ export default function CadastroTecnico() {
 
     const questrialFont = 'Questrial_400Regular';
 
-    const handleCadastro = async () => {
+    const handleRegister = async () => {
         if (senha !== confirmarSenha) {
             alert("As senhas não coincidem!");
             return;
@@ -257,7 +257,7 @@ export default function CadastroTecnico() {
                 <View style={styles.footerContainer}>
                     <TouchableOpacity 
                         style={styles.cadastrarButton} 
-                        onPress={handleCadastro}
+                        onPress={handleRegister}
                         activeOpacity={0.8}
                     >
                         <Text style={[styles.buttonText, { fontFamily: questrialFont }]}>

@@ -35,21 +35,21 @@ const PROFILES: ProfileType[] = [
     {
         id: "colaborador",
         label: "Usuário Colaborador",
-        route: "/cadastro-colaborador",
+        route: "/register_collaborator",
         description:
             "Vinculado a comunidades ou iniciativas locais, contribui com observações e registros contínuos no sistema. Atua como ponte entre a população e os especialistas.",
     },
     {
         id: "técnico",
         label: "Equipe Técnica",
-        route: "/cadastro-tecnico",
+        route: "/register_technician",
         description:
             "Responsável por análises técnicas detalhadas, acompanhamento de dados e validações especializadas. Utiliza ferramentas avançadas de monitoramento",
     },
     {
         id: "gestor",
         label: "Usuário Gestor",
-        route: "/cadastro-gestor",
+        route: "/register_manager",
         description:
             "Responsável pelo monitoramento geral, visualização de informações estratégicas e suporte à tomada de decisão em nível institucional ou municipal.",
     },

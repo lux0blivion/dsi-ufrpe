@@ -21,7 +21,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { useFonts, Questrial_400Regular } from "@expo-google-fonts/questrial";
-
+import { sendVerificationEmail } from "@/services/emailService";
 import { registerCommonUser, parseFirebaseAuthError } from "@/services/auth/register";
 import {
     validateName,
@@ -101,23 +101,33 @@ export default function RegisterCommon() {
         setLoading(true);
         try {
             await registerCommonUser({ nome, email, cidade, senha });
+            await sendVerificationEmail({ nome, email });
+
             Alert.alert(
                 "Cadastro realizado!",
-                "Enviamos um e-mail de verificação para " +
-                    email +
-                    ".\n\nVerifique sua caixa de entrada e confirme seu e-mail para acessar o AquaSense.",
-                [{ text: "Entendi", onPress: () => router.back() }]
+                `Enviamos um e-mail de verificação para ${email}.\n\nVerifique sua caixa de entrada e confirme seu e-mail para acessar o AquaSense.`,
+                [{ text: "Entendi", onPress: () => router.replace("/awaiting-verification") }]
             );
         } catch (err: any) {
-            console.log("ERRO COMPLETO:", err);
-            console.log("CÓDIGO DO ERRO:", err?.code);
-            console.log("MENSAGEM DO ERRO:", err?.message);
-            
-            Alert.alert(
-                "Erro no cadastro",
-                `${err?.code ?? "sem código"} | ${err?.message ?? "sem mensagem"}`
-            );
+            console.log("ERRO:", err?.code, err?.message);
 
+            if (
+                err?.message?.includes("TOO_MANY_ATTEMPTS_TRY_LATER") ||
+                err?.code === "auth/too-many-requests"
+            ) {
+                Alert.alert(
+                    "Muitas tentativas",
+                    "O Firebase bloqueou temporariamente. Espere alguns minutos e tente novamente."
+                );
+            } else if (err?.code?.startsWith("auth/")) {
+                Alert.alert("Erro no cadastro", parseFirebaseAuthError(err.code));
+            } else {
+                Alert.alert(
+                    "Erro no envio do e-mail",
+                    err?.message ??
+                        "O cadastro foi realizado, mas o e-mail de verificação não pôde ser enviado. Tente novamente."
+                );
+            }
         } finally {
             setLoading(false);
         }
@@ -174,6 +184,7 @@ export default function RegisterCommon() {
                         </Text>
 
                         <View style={styles.formWrapper}>
+
                             {/* NOME */}
                             <FieldLabel label="Seu nome:" fontFamily={questrial} />
                             <TextInput
@@ -219,7 +230,6 @@ export default function RegisterCommon() {
                                 onChangeText={(t) => {
                                     const sanitized = t.replace(/\s/g, "");
                                     setEmail(sanitized);
-
                                     if (errors.email) {
                                         setErrors((prev) => ({
                                             ...prev,
@@ -276,7 +286,6 @@ export default function RegisterCommon() {
                                     value={senha}
                                     onChangeText={(text) => {
                                         setSenha(text);
-
                                         if (errors.senha || errors.confirmSenha) {
                                             setErrors((prev) => ({
                                                 ...prev,
@@ -323,7 +332,6 @@ export default function RegisterCommon() {
                                     value={confirmSenha}
                                     onChangeText={(text) => {
                                         setConfirmSenha(text);
-
                                         if (errors.confirmSenha) {
                                             setErrors((prev) => ({
                                                 ...prev,
@@ -386,6 +394,7 @@ export default function RegisterCommon() {
                                     </Text>
                                 )}
                             </TouchableOpacity>
+
                         </View>
                     </ScrollView>
                 </KeyboardAvoidingView>
@@ -515,6 +524,7 @@ export default function RegisterCommon() {
                         </Pressable>
                     </Pressable>
                 </Modal>
+
             </LinearGradient>
         </>
     );
@@ -841,6 +851,4 @@ const styles = StyleSheet.create({
         flex: 1,
         lineHeight: 20,
     },
-});               
-
-      
+});

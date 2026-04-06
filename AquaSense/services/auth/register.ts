@@ -76,6 +76,40 @@ export async function registerCollaboratorUser(
 }
 
 // ==========================================
+// USUÁRIO TÉCNICO
+// ==========================================
+export interface RegisterTechnicianPayload {
+    nome: string;
+    email: string;
+    codigoEquipe: string; 
+    senha: string;
+}
+
+export async function registerTechnician(
+    payload: RegisterTechnicianPayload
+): Promise<void> {
+    const { nome, email, codigoEquipe, senha } = payload;
+
+    // Criar a conta no Firebase Authentication
+    const credential = await createUserWithEmailAndPassword(auth, email, senha);
+    const { uid } = credential.user;
+
+    // Enviar verificação de email
+    await sendEmailVerification(credential.user);
+
+    // Persistir dados no Firestore
+    await setDoc(doc(db, "usuarios", uid), {
+        uid,
+        nome: nome.trim(),
+        email: email.toLowerCase().trim(),
+        codigoEquipe: codigoEquipe.trim(),
+        tipoUsuario: "tecnico",
+        statusConta: "pendente_verificacao",
+        dataCriacao: serverTimestamp(),
+    });
+}
+
+// ==========================================
 // TRATAMENTO DE ERROS
 // ==========================================
 // Mapeia códigos de erro do Firebase Auth para mensagens legíveis.

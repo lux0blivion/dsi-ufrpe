@@ -3,6 +3,9 @@ import { createUserWithEmailAndPassword, reload } from "firebase/auth";
 import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
 
+// ==========================================
+// USUÁRIO COMUM
+// ==========================================
 export interface RegisterCommonPayload {
   nome: string;
   email: string;
@@ -14,6 +17,7 @@ export async function registerCommonUser(
   payload: RegisterCommonPayload
 ): Promise<void> {
   const { nome, email, cidade, senha } = payload;
+
 
   const credential = await createUserWithEmailAndPassword(auth, email, senha);
   const { uid } = credential.user;
@@ -61,4 +65,5 @@ export function parseFirebaseAuthError(code: string): string {
     default:
       return "Ocorreu um erro inesperado. Tente novamente.";
   }
+
 }

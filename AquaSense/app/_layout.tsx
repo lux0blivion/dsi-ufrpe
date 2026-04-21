@@ -21,9 +21,16 @@ export default function RootLayout() {
             porque estava levando direto para a home das tabs sem passar
             pelo fluxo de autenticação.
           */}
+
+          {/* index agora exibe a SplashScreen — ela redireciona para /login
+              automaticamente ao fim da animação via router.replace('/login') */}
           <Stack.Screen name="index" options={{ headerShown: false }} />
+
+          {/* ← ADICIONADO: necessário para a splash conseguir navegar para o login */}
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+
           <Stack.Screen name="select_user_type" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          
 
           {/* Tela exibida após o cadastro enquanto o usuário ainda não
               confirmou o e-mail. Fica fora das tabs pois é um passo

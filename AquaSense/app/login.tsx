@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     View,
     Text,
@@ -14,6 +14,7 @@ import {
     ScrollView,
     Modal,
     Pressable,
+    Animated, // ← adicionado
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, router } from "expo-router";
@@ -35,6 +36,50 @@ export default function Login() {
     const [forgotSent, setForgotSent] = useState(false);
 
     const senhaRef = useRef<TextInput>(null);
+
+    // ─── Animação de entrada ───────────────────────────────────────────────────
+    // Grupo 1: logo + título
+    const logoFade = useRef(new Animated.Value(0)).current;
+    const logoTranslate = useRef(new Animated.Value(18)).current; // ↑ sobe de baixo
+
+    // Grupo 2: formulário + footer (entra ligeiramente depois)
+    const formFade = useRef(new Animated.Value(0)).current;
+    const formTranslate = useRef(new Animated.Value(18)).current;
+
+    useEffect(() => {
+        // Grupo 1 começa imediatamente
+        Animated.parallel([
+            Animated.timing(logoFade, {
+                toValue: 1,
+                duration: 900,       // mais lento que Select (700ms) → mais suave
+                useNativeDriver: true,
+            }),
+            Animated.timing(logoTranslate, {
+                toValue: 0,
+                duration: 900,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Grupo 2 começa 150ms depois — stagger sutil, sem chamar atenção
+        const timer = setTimeout(() => {
+            Animated.parallel([
+                Animated.timing(formFade, {
+                    toValue: 1,
+                    duration: 900,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(formTranslate, {
+                    toValue: 0,
+                    duration: 900,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }, 150);
+
+        return () => clearTimeout(timer);
+    }, [logoFade, logoTranslate, formFade, formTranslate]);
+    // ──────────────────────────────────────────────────────────────────────────
 
     const [fontsLoaded] = useFonts({ Questrial_400Regular });
     const questrial = fontsLoaded ? "Questrial_400Regular" : undefined;
@@ -122,121 +167,137 @@ export default function Login() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        {/* LOGO */}
-                        <View style={styles.logoContainer}>
-                            <Image
-                                source={require("../assets/images/aquasense-logo.png")}
-                                style={styles.logoImage}
-                                resizeMode="contain"
-                                tintColor="#FFFFFF"
-                            />
-                        </View>
+                        {/* ── GRUPO 1: logo + título ── */}
+                        <Animated.View
+                            style={{
+                                opacity: logoFade,
+                                transform: [{ translateY: logoTranslate }],
+                            }}
+                        >
+                            {/* LOGO */}
+                            <View style={styles.logoContainer}>
+                                <Image
+                                    source={require("../assets/images/aquasense-logo.png")}
+                                    style={styles.logoImage}
+                                    resizeMode="contain"
+                                    tintColor="#FFFFFF"
+                                />
+                            </View>
 
-                        {/* TÍTULO */}
-                        <Text style={[styles.title, { fontFamily: questrial }]}>
-                            CONECTE-SE AO{"\n"}AQUASENSE
-                        </Text>
-
-                        {/* FORMULÁRIO */}
-                        <View style={styles.formWrapper}>
-
-                            {/* EMAIL */}
-                            <FieldLabel label="Seu Email:" fontFamily={questrial} />
-                            <TextInput
-                                style={[styles.input, { fontFamily: questrial }]}
-                                placeholder="Email..."
-                                placeholderTextColor="rgba(107, 122, 122, 0.6)"
-                                value={email}
-                                onChangeText={(t) => setEmail(t.replace(/\s/g, ""))}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                returnKeyType="next"
-                                onSubmitEditing={() => senhaRef.current?.focus()}
-                            />
-
-                            {/* SENHA */}
-                            <FieldLabel label="Senha:" fontFamily={questrial} />
-                            <TextInput
-                                ref={senhaRef}
-                                style={[styles.input, { fontFamily: questrial }]}
-                                placeholder="Sua senha..."
-                                placeholderTextColor="rgba(107, 122, 122, 0.6)"
-                                value={senha}
-                                onChangeText={setSenha}
-                                secureTextEntry={!showPassword}
-                                returnKeyType="done"
-                                onSubmitEditing={handleLogin}
-                            />
-
-                            {/* ESQUECEU A SENHA */}
-                            <TouchableOpacity
-                                style={styles.forgotButton}
-                                onPress={() => {
-                                    // Pré-preenche com o e-mail do campo de login se já tiver algo
-                                    if (email.trim()) setForgotEmail(email.trim());
-                                    setForgotModalVisible(true);
-                                }}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={[styles.forgotText, { fontFamily: questrial }]}>
-                                    Esqueceu a senha?
-                                </Text>
-                            </TouchableOpacity>
-
-                            {/* MOSTRAR SENHA */}
-                            <TouchableOpacity
-                                style={styles.checkboxRow}
-                                onPress={() => setShowPassword((v) => !v)}
-                                activeOpacity={0.7}
-                            >
-                                <View style={[styles.checkbox, showPassword && styles.checkboxChecked]}>
-                                    {showPassword && (
-                                        <Ionicons name="checkmark" size={13} color="#fff" />
-                                    )}
-                                </View>
-                                <Text style={[styles.checkboxLabel, { fontFamily: questrial }]}>
-                                    MOSTRAR SENHA
-                                </Text>
-                            </TouchableOpacity>
-
-                            {/* BOTÃO CONECTAR */}
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={handleLogin}
-                                activeOpacity={0.85}
-                                disabled={loading}
-                            >
-                                {loading ? (
-                                    <ActivityIndicator color="#004d48" />
-                                ) : (
-                                    <Text style={[styles.buttonText, { fontFamily: questrial }]}>
-                                        CONECTAR
-                                    </Text>
-                                )}
-                            </TouchableOpacity>
-
-                        </View>
-
-                        {/* LINK CADASTRO */}
-                        <View style={styles.footer}>
-                            <Text style={[styles.footerText, { fontFamily: questrial }]}>
-                                Não tem conta?{" "}
+                            {/* TÍTULO */}
+                            <Text style={[styles.title, { fontFamily: questrial }]}>
+                                CONECTE-SE AO{"\n"}AQUASENSE
                             </Text>
-                            <TouchableOpacity
-                                onPress={() => router.push("/select_user_type" as any)}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={[styles.footerLink, { fontFamily: questrial }]}>
-                                    Cadastre-se
+                        </Animated.View>
+
+                        {/* ── GRUPO 2: formulário + footer ── */}
+                        <Animated.View
+                            style={{
+                                opacity: formFade,
+                                transform: [{ translateY: formTranslate }],
+                                width: "100%",
+                            }}
+                        >
+                            {/* FORMULÁRIO */}
+                            <View style={styles.formWrapper}>
+
+                                {/* EMAIL */}
+                                <FieldLabel label="Seu Email:" fontFamily={questrial} />
+                                <TextInput
+                                    style={[styles.input, { fontFamily: questrial }]}
+                                    placeholder="Email..."
+                                    placeholderTextColor="rgba(107, 122, 122, 0.6)"
+                                    value={email}
+                                    onChangeText={(t) => setEmail(t.replace(/\s/g, ""))}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => senhaRef.current?.focus()}
+                                />
+
+                                {/* SENHA */}
+                                <FieldLabel label="Senha:" fontFamily={questrial} />
+                                <TextInput
+                                    ref={senhaRef}
+                                    style={[styles.input, { fontFamily: questrial }]}
+                                    placeholder="Sua senha..."
+                                    placeholderTextColor="rgba(107, 122, 122, 0.6)"
+                                    value={senha}
+                                    onChangeText={setSenha}
+                                    secureTextEntry={!showPassword}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleLogin}
+                                />
+
+                                {/* ESQUECEU A SENHA */}
+                                <TouchableOpacity
+                                    style={styles.forgotButton}
+                                    onPress={() => {
+                                        if (email.trim()) setForgotEmail(email.trim());
+                                        setForgotModalVisible(true);
+                                    }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.forgotText, { fontFamily: questrial }]}>
+                                        Esqueceu a senha?
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {/* MOSTRAR SENHA */}
+                                <TouchableOpacity
+                                    style={styles.checkboxRow}
+                                    onPress={() => setShowPassword((v) => !v)}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={[styles.checkbox, showPassword && styles.checkboxChecked]}>
+                                        {showPassword && (
+                                            <Ionicons name="checkmark" size={13} color="#fff" />
+                                        )}
+                                    </View>
+                                    <Text style={[styles.checkboxLabel, { fontFamily: questrial }]}>
+                                        MOSTRAR SENHA
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {/* BOTÃO CONECTAR */}
+                                <TouchableOpacity
+                                    style={styles.button}
+                                    onPress={handleLogin}
+                                    activeOpacity={0.85}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <ActivityIndicator color="#004d48" />
+                                    ) : (
+                                        <Text style={[styles.buttonText, { fontFamily: questrial }]}>
+                                            CONECTAR
+                                        </Text>
+                                    )}
+                                </TouchableOpacity>
+
+                            </View>
+
+                            {/* LINK CADASTRO */}
+                            <View style={styles.footer}>
+                                <Text style={[styles.footerText, { fontFamily: questrial }]}>
+                                    Não tem conta?{" "}
                                 </Text>
-                            </TouchableOpacity>
-                        </View>
+                                <TouchableOpacity
+                                    onPress={() => router.push("/select_user_type" as any)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.footerLink, { fontFamily: questrial }]}>
+                                        Cadastre-se
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </Animated.View>
 
                     </ScrollView>
                 </KeyboardAvoidingView>
 
-                {/* MODAL RECUPERAÇÃO DE SENHA */}
+                {/* MODAL RECUPERAÇÃO DE SENHA — sem animação, comportamento preservado */}
                 <Modal
                     visible={forgotModalVisible}
                     transparent

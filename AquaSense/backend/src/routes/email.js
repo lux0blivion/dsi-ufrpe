@@ -1,12 +1,40 @@
 const express = require("express");
-const { Resend } = require("resend");
 const admin = require("../config/firebaseAdmin");
 const { buildVerificationEmailHtml } = require("../templates/verificationEmail");
 const { buildPasswordResetEmailHtml } = require("../templates/passwordResetEmail");
 
 const router = express.Router();
+console.log("email.js carregado - usando BREVO");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+async function sendEmailWithBrevo({ to, subject, html }) {
+  console.log("Entrou na função de envio via Brevo");
+  console.log("Enviando para:", to);
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": process.env.BREVO_API_KEY,
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "AquaSense",
+        email: process.env.MAIL_FROM,
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    console.error("Erro ao enviar via Brevo:", data);
+    throw new Error(data?.message || "Erro ao enviar e-mail via Brevo.");
+  }
+
+  return data;
+}
 
 /**
  * POST /send-verification-email
@@ -33,28 +61,20 @@ router.post("/send-verification-email", async (req, res) => {
 
     const html = buildVerificationEmailHtml({ nome, verificationLink });
 
-    const { data, error } = await resend.emails.send({
-      from: "AquaSense <onboarding@resend.dev>",
+    const data = await sendEmailWithBrevo({
       to: email,
       subject: "Confirme seu e-mail no AquaSense",
       html,
     });
 
-    if (error) {
-      console.error("Erro ao enviar via Resend:", error);
-      return res.status(500).json({
-        error: "Erro ao enviar e-mail de verificação.",
-        details: error.message,
-      });
-    }
-
-    console.log(`E-mail enviado para ${email} | ID: ${data.id}`);
+    console.log(
+      `E-mail enviado para ${email} | ID: ${data?.messageId || "sem-id"}`
+    );
 
     return res.status(200).json({
       message: "E-mail de verificação enviado com sucesso.",
-      messageId: data.id,
+      messageId: data?.messageId || null,
     });
-
   } catch (error) {
     console.error("Erro ao enviar e-mail de verificação:", error);
 
@@ -63,7 +83,7 @@ router.post("/send-verification-email", async (req, res) => {
     return res.status(500).json({
       error: isFirebaseError
         ? "Erro ao gerar link de verificação no Firebase."
-        : "Erro ao enviar e-mail via Resend.",
+        : "Erro ao enviar e-mail via Brevo.",
       details: error.message,
       code: error.code || null,
     });
@@ -95,28 +115,20 @@ router.post("/send-password-reset-email", async (req, res) => {
 
     const html = buildPasswordResetEmailHtml({ resetLink });
 
-    const { data, error } = await resend.emails.send({
-      from: "AquaSense <onboarding@resend.dev>",
+    const data = await sendEmailWithBrevo({
       to: email,
       subject: "Redefinição de senha no AquaSense",
       html,
     });
 
-    if (error) {
-      console.error("Erro ao enviar via Resend:", error);
-      return res.status(500).json({
-        error: "Erro ao enviar e-mail de redefinição.",
-        details: error.message,
-      });
-    }
-
-    console.log(`E-mail de reset enviado para ${email} | ID: ${data.id}`);
+    console.log(
+      `E-mail de reset enviado para ${email} | ID: ${data?.messageId || "sem-id"}`
+    );
 
     return res.status(200).json({
       message: "E-mail de redefinição enviado com sucesso.",
-      messageId: data.id,
+      messageId: data?.messageId || null,
     });
-
   } catch (error) {
     console.error("Erro ao enviar e-mail de reset:", error);
 
@@ -125,7 +137,7 @@ router.post("/send-password-reset-email", async (req, res) => {
     return res.status(500).json({
       error: isFirebaseError
         ? "Erro ao gerar link de redefinição no Firebase."
-        : "Erro ao enviar e-mail via Resend.",
+        : "Erro ao enviar e-mail via Brevo.",
       details: error.message,
       code: error.code || null,
     });

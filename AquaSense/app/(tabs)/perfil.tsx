@@ -1,11 +1,74 @@
 // app/(tabs)/perfil.tsx
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Para os ícones de mapa e alertas
-import { LinearGradient } from 'expo-linear-gradient'; // Para o gradiente no topo
+import React, { useEffect, useState} from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; 
+import { LinearGradient } from 'expo-linear-gradient'; 
+import { db } from '../../config/firebase'; 
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth'; 
+
 const logoImg = require('../../assets/images/AquaSenseLogoAlinhada.png'); 
 
 export default function PerfilScreen() {
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState({ nome: '', cidade: '', uf: '' });
+  const [rios, setRios] = useState<string[]>([]);
+  const [observacoes, setObservacoes] = useState<{ total: number, rios: string[] }>({ total: 0, rios: [] });
+
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // USANDO O ID DA IMAGEM DIRETAMENTE PARA TESTE
+      const amandaUid = "2jy2bmooO9O7mGMOPWJBfNBx0dE2"; 
+      
+      // 1. Conecta aos dados do Usuário
+      const userRef = doc(db, "usuarios", amandaUid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        setUserData({
+          nome: data.nome || 'Usuário',     
+          cidade: data.cidade || 'Cidade não informada', 
+          uf: "PE"            
+        });
+      }
+
+      // 2. Conecta aos Corpos Hídricos
+        const qRios = query(collection(db, "corposHidricos"), where("uid", "==", amandaUid));
+        const riosSnap = await getDocs(qRios);
+        setRios(riosSnap.docs.map(doc => doc.data().nome));
+
+        // 3. Conecta às Observações Feitas
+        const qObs = query(collection(db, "observacoes"), where("uid", "==", amandaUid));
+        const obsSnap = await getDocs(qObs);
+        
+        // Total de documentos na coleção 'observacoes' para este usuário
+        const totalObs = obsSnap.size; 
+        
+        // Extrai nomes dos rios únicos das observações (evita repetir o mesmo rio na lista)
+        const riosComObs = Array.from(new Set(obsSnap.docs.map(doc => doc.data().nomeRio)));
+        
+        setObservacoes({ total: totalObs, rios: riosComObs });
+
+      } catch (error) {
+        console.error("Erro na conexão:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  fetchData();
+}, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FBFB' }}>
+        <ActivityIndicator size="large" color="#004d48" />
+        <Text style={{ marginTop: 10, color: '#004d48' }}>Carregando perfil...</Text>
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -25,11 +88,14 @@ export default function PerfilScreen() {
             
             <View style={styles.userInfo}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>A</Text>
+                {/* Pega a primeira letra do nome dinamicamente */}
+                <Text style={styles.avatarText}>
+                  {userData.nome ? userData.nome.charAt(0).toUpperCase() : 'A'}
+                </Text>
               </View>
               <View>
-                <Text style={styles.userName}>Ana Souza</Text>
-                <Text style={styles.userLocation}>Recife - PE</Text>
+                <Text style={styles.userName}>{userData.nome}</Text>
+                <Text style={styles.userLocation}>{`${userData.cidade} - ${userData.uf}`}</Text>
               </View>
             </View>
           </View>
@@ -46,20 +112,47 @@ export default function PerfilScreen() {
 
         {/* Card Corpos Hídricos */}
         <View style={styles.card}>
-            {/* Conteúdo do Card */}
             <View style={styles.cardHeader}>
                 <View style={styles.iconCircle}>
                     <Ionicons name="water" size={24} color="#00A896" />
                 </View>
                 <Text style={styles.cardTitle}>Corpos hídricos registrados</Text>
-                <Text style={styles.cardNumber}>2</Text>
+                {/* Quantidade dinâmica baseada no array vindo do banco */}
+                <Text style={styles.cardNumber}>{rios.length}</Text>
             </View>
+            
             <View style={styles.cardDetails}>
-                <Text style={styles.detailItem}>• Rio Capibaribe</Text>
-                <Text style={styles.detailItem}>• Rio Moxotó</Text>
+                {rios.length > 0 ? (
+                  rios.map((rio, index) => (
+                    <Text key={index} style={styles.detailItem}>• {rio}</Text>
+                  ))
+                ) : (
+                  <Text style={styles.detailItem}>Nenhum corpo hídrico encontrado.</Text>
+                )}
             </View>
         </View>
-
+        {/* Card Observações Feitas */}
+        <View style={styles.card}>
+            <View style={styles.cardHeader}>
+                <View style={[styles.iconCircle, { backgroundColor: '#E0F7F8' }]}>
+                    <Ionicons name="create-outline" size={24} color="#00A896" />
+                </View>
+                <Text style={styles.cardTitle}>Observações feitas</Text>
+                <Text style={styles.cardNumber}>{observacoes.total}</Text>
+            </View>
+            <View style={styles.cardDetails}>
+                {observacoes.rios.length > 0 ? (
+                  observacoes.rios.map((rio, index) => (
+                    <View key={index} style={styles.detailRow}>
+                      <Ionicons name="location-outline" size={16} color="#00A896" />
+                      <Text style={styles.detailItem}>{rio}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.detailItem}>Nenhuma observação registrada.</Text>
+                )}
+            </View>
+        </View>
         
       </ScrollView>
     </View>
@@ -133,7 +226,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100, 
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#004d48',
     marginTop: 25,
@@ -167,10 +260,10 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#333',
-    marginLeft: 12,
+    marginLeft: 10,
   },
   cardNumber: {
     fontSize: 28,
@@ -185,6 +278,11 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
+  detailRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 6 
+},
   // Estilos da seção de Configurações
   configRow: {
     flexDirection: 'row',

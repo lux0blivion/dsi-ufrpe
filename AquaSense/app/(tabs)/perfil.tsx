@@ -11,9 +11,16 @@ const logoImg = require('../../assets/images/AquaSenseLogoAlinhada.png');
 
 export default function PerfilScreen() {
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState({ nome: '', cidade: '', uf: '' });
+  const [userData, setUserData] = useState({ nome: '', cidade: '', uf: '', email: '' });
   const [rios, setRios] = useState<string[]>([]);
   const [observacoes, setObservacoes] = useState<{ total: number, rios: string[] }>({ total: 0, rios: [] });
+
+  // Função para mascarar o e-mail (ex: ama****@gmail.com)
+  const maskEmail = (email: string) => {
+    if (!email) return "";
+    const [user, domain] = email.split('@');
+    return `${user.substring(0, 3)}****@${domain}`;
+  };
 
  useEffect(() => {
   const fetchData = async () => {
@@ -30,7 +37,8 @@ export default function PerfilScreen() {
         setUserData({
           nome: data.nome || 'Usuário',     
           cidade: data.cidade || 'Cidade não informada', 
-          uf: "PE"            
+          uf: "PE",
+          email: maskEmail(data.email || '')           
         });
       }
 
@@ -131,6 +139,7 @@ export default function PerfilScreen() {
                 )}
             </View>
         </View>
+
         {/* Card Observações Feitas */}
         <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -152,6 +161,44 @@ export default function PerfilScreen() {
                   <Text style={styles.detailItem}>Nenhuma observação registrada.</Text>
                 )}
             </View>
+        </View>
+        {/* Seção Configurações da Conta */}
+        <Text style={styles.sectionTitle}>Configurações da conta</Text>
+        <View style={styles.card}>
+          <View style={styles.configRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.configLabel}>E-mail: 
+                <Text style={styles.configValue}>  {maskEmail(userData.email)}</Text>
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.editButton}>
+              <Text style={styles.editButtonText}>Editar e-mail</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.configRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.configLabel}>Senha: 
+                <Text style={styles.configValue}>  ********</Text>
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.editButton}>
+              <Text style={styles.editButtonText}>Alterar senha</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Botões de Perigo */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={[styles.actionButton, styles.btnExcluir]}>
+            <Text style={styles.buttonText}>Excluir conta</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionButton, styles.btnDesativar]}>
+            <Text style={[styles.buttonText, styles.btnTextEscuro]}>Desativar conta</Text>
+          </TouchableOpacity>
         </View>
         
       </ScrollView>
@@ -300,6 +347,15 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
+  configValue: { 
+    fontWeight: 'normal', 
+    color: '#666' 
+},
+divider: { 
+    height: 1, 
+    backgroundColor: '#F5F5F5', 
+    marginVertical: 4 
+},
   editButton: {
     backgroundColor: '#E0F7F8',
     paddingVertical: 6,

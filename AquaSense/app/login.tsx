@@ -8,7 +8,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    Alert,
     StatusBar,
     Image,
     ScrollView,
@@ -31,6 +30,18 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    // ── Modal de erro (substitui Alert.alert) ──────────────────────────────
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorModalTitle, setErrorModalTitle] = useState("");
+    const [errorModalMessage, setErrorModalMessage] = useState("");
+
+    function showError(title: string, message: string) {
+        setErrorModalTitle(title);
+        setErrorModalMessage(message);
+        setErrorModalVisible(true);
+    }
+    // ───────────────────────────────────────────────────────────────────────
+
     const [forgotModalVisible, setForgotModalVisible] = useState(false);
     const [forgotEmail, setForgotEmail] = useState("");
     const [forgotLoading, setForgotLoading] = useState(false);
@@ -45,30 +56,14 @@ export default function Login() {
 
     useEffect(() => {
         Animated.parallel([
-            Animated.timing(logoFade, {
-                toValue: 1,
-                duration: 900,
-                useNativeDriver: true,
-            }),
-            Animated.timing(logoTranslate, {
-                toValue: 0,
-                duration: 900,
-                useNativeDriver: true,
-            }),
+            Animated.timing(logoFade, { toValue: 1, duration: 900, useNativeDriver: true }),
+            Animated.timing(logoTranslate, { toValue: 0, duration: 900, useNativeDriver: true }),
         ]).start();
 
         const timer = setTimeout(() => {
             Animated.parallel([
-                Animated.timing(formFade, {
-                    toValue: 1,
-                    duration: 900,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(formTranslate, {
-                    toValue: 0,
-                    duration: 900,
-                    useNativeDriver: true,
-                }),
+                Animated.timing(formFade, { toValue: 1, duration: 900, useNativeDriver: true }),
+                Animated.timing(formTranslate, { toValue: 0, duration: 900, useNativeDriver: true }),
             ]).start();
         }, 150);
 
@@ -82,7 +77,11 @@ export default function Login() {
         const emailTrimmed = email.trim();
 
         if (!emailTrimmed || !senha) {
-            Alert.alert("Campos obrigatórios", "Preencha o e-mail e a senha para continuar.");
+            // ── era: Alert.alert("Campos obrigatórios", "...") ──
+            showError(
+                "Campos obrigatórios",
+                "Preencha o e-mail e a senha para continuar."
+            );
             return;
         }
 
@@ -95,24 +94,30 @@ export default function Login() {
 
             if (!user.emailVerified) {
                 await auth.signOut();
-                Alert.alert(
+                // ── era: Alert.alert("E-mail não verificado", "...") ──
+                showError(
                     "E-mail não verificado",
-                    "Você precisa verificar seu e-mail antes de acessar o AquaSense.\n\nAcesse sua caixa de entrada e clique no link de confirmação que enviamos.",
-                    [{ text: "Entendi" }]
+                    "Você precisa verificar seu e-mail antes de acessar o AquaSense.\n\nAcesse sua caixa de entrada e clique no link de confirmação que enviamos."
                 );
                 return;
             }
 
-            // Verifica se o usuário já viu o tutorial
             const docSnap = await getDoc(doc(db, "usuarios", user.uid));
-            const jaViuTutorial = docSnap.exists() && docSnap.data().hasSeenTutorial === true;
+            const userData = docSnap.exists() ? docSnap.data() : null;
+            const tipoUsuario = userData?.tipoUsuario ?? "comum";
 
-            // Redireciona com parâmetro apenas no primeiro acesso
-            router.replace(jaViuTutorial ? "/(tabs)" : "/(tabs)?tutorial=1" as any);
+            if (tipoUsuario === "comum") {
+                const jaViuTutorial = userData?.hasSeenTutorial === true;
+                router.replace(jaViuTutorial ? "/(tabs)" : "/(tabs)?tutorial=1" as any);
+            } else {
+                // colaborador, tecnico, gestor
+                router.replace("/under-development" as any);
+            }
 
         } catch (err: any) {
             const msg = parseLoginError(err?.code, email.trim());
-            Alert.alert("Erro ao entrar", msg);
+            // ── era: Alert.alert("Erro ao entrar", msg) ──
+            showError("Erro ao entrar", msg);
         } finally {
             setLoading(false);
         }
@@ -122,7 +127,8 @@ export default function Login() {
         const emailTrimmed = forgotEmail.trim();
 
         if (!emailTrimmed) {
-            Alert.alert("Campo obrigatório", "Informe seu e-mail para continuar.");
+            // ── era: Alert.alert("Campo obrigatório", "...") ──
+            showError("Campo obrigatório", "Informe seu e-mail para continuar.");
             return;
         }
 
@@ -132,7 +138,8 @@ export default function Login() {
             setForgotSent(true);
         } catch (err: any) {
             const msg = parseForgotError(err?.code);
-            Alert.alert("Erro", msg);
+            // ── era: Alert.alert("Erro", msg) ──
+            showError("Erro", msg);
         } finally {
             setForgotLoading(false);
         }
@@ -165,7 +172,6 @@ export default function Login() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        
                         <Animated.View
                             style={{
                                 opacity: logoFade,
@@ -180,13 +186,11 @@ export default function Login() {
                                     tintColor="#FFFFFF"
                                 />
                             </View>
-
                             <Text style={[styles.title, { fontFamily: questrial }]}>
                                 CONECTE-SE AO{"\n"}AQUASENSE
                             </Text>
                         </Animated.View>
 
-                        
                         <Animated.View
                             style={{
                                 opacity: formFade,
@@ -195,7 +199,6 @@ export default function Login() {
                             }}
                         >
                             <View style={styles.formWrapper}>
-
                                 <FieldLabel label="Seu Email:" fontFamily={questrial} />
                                 <TextInput
                                     style={[styles.input, { fontFamily: questrial }]}
@@ -265,7 +268,6 @@ export default function Login() {
                                         </Text>
                                     )}
                                 </TouchableOpacity>
-
                             </View>
 
                             <View style={styles.footer}>
@@ -282,11 +284,49 @@ export default function Login() {
                                 </TouchableOpacity>
                             </View>
                         </Animated.View>
-
                     </ScrollView>
                 </KeyboardAvoidingView>
 
-                
+                {/* ── MODAL DE ERRO (substitui Alert.alert) ─────────────────────────── */}
+                <Modal
+                    visible={errorModalVisible}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setErrorModalVisible(false)}
+                >
+                    <Pressable
+                        style={styles.modalOverlay}
+                        onPress={() => setErrorModalVisible(false)}
+                    >
+                        <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+                            <Ionicons
+                                name="alert-circle-outline"
+                                size={48}
+                                color="#004d48"
+                                style={{ alignSelf: "center", marginBottom: 16 }}
+                            />
+                            <Text style={[styles.modalTitle, { fontFamily: questrial }]}>
+                                {errorModalTitle}
+                            </Text>
+                            <View style={styles.modalDivider} />
+                            <Text style={[styles.modalDescription, { fontFamily: questrial }]}>
+                                {errorModalMessage}
+                            </Text>
+                            <TouchableOpacity
+                                style={styles.modalButton}
+                                onPress={() => setErrorModalVisible(false)}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={[styles.modalButtonText, { fontFamily: questrial }]}>
+                                    Entendi
+                                </Text>
+                            </TouchableOpacity>
+                        </Pressable>
+                    </Pressable>
+                </Modal>
+                {/* ─────────────────────────────────────────────────────────────────── */}
+
+                {/* MODAL ESQUECI A SENHA */}
                 <Modal
                     visible={forgotModalVisible}
                     transparent
@@ -294,10 +334,7 @@ export default function Login() {
                     onRequestClose={handleCloseForgotModal}
                 >
                     <Pressable style={styles.modalOverlay} onPress={handleCloseForgotModal}>
-                        <Pressable
-                            style={styles.modalCard}
-                            onPress={(e) => e.stopPropagation()}
-                        >
+                        <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
                             {forgotSent ? (
                                 <>
                                     <Ionicons
@@ -427,7 +464,6 @@ const BORDER_RADIUS = 50;
 const styles = StyleSheet.create({
     flex: { flex: 1 },
     gradient: { flex: 1 },
-
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 36,
@@ -436,14 +472,8 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-
     logoContainer: { marginBottom: 8 },
-
-    logoImage: {
-        width: 180,
-        height: 180,
-    },
-
+    logoImage: { width: 180, height: 180 },
     title: {
         color: "#fff",
         fontSize: 17,
@@ -453,9 +483,7 @@ const styles = StyleSheet.create({
         marginBottom: 32,
         lineHeight: 26,
     },
-
     formWrapper: { width: "100%" },
-
     fieldLabel: {
         color: "rgba(255, 255, 255, 0.85)",
         fontSize: 12,
@@ -464,7 +492,6 @@ const styles = StyleSheet.create({
         marginLeft: 6,
         letterSpacing: 0.3,
     },
-
     input: {
         backgroundColor: "rgba(255, 255, 255, 0.92)",
         borderRadius: BORDER_RADIUS,
@@ -481,7 +508,6 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
     },
-
     forgotButton: {
         alignSelf: "flex-end",
         marginTop: -6,
@@ -489,14 +515,12 @@ const styles = StyleSheet.create({
         marginRight: 6,
         paddingVertical: 4,
     },
-
     forgotText: {
         fontSize: 12,
         color: "rgba(255, 255, 255, 0.75)",
         textDecorationLine: "underline",
         letterSpacing: 0.2,
     },
-
     checkboxRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -504,7 +528,6 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         marginLeft: 6,
     },
-
     checkbox: {
         width: 18,
         height: 18,
@@ -516,19 +539,16 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginRight: 8,
     },
-
     checkboxChecked: {
         backgroundColor: PRIMARY,
         borderColor: PRIMARY,
     },
-
     checkboxLabel: {
         color: "rgba(255, 255, 255, 0.9)",
         fontSize: 11,
         fontWeight: "700",
         letterSpacing: 1,
     },
-
     button: {
         backgroundColor: "rgba(255, 255, 255, 0.92)",
         borderRadius: BORDER_RADIUS,
@@ -541,33 +561,28 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
     },
-
     buttonText: {
         color: "#6b7a7a",
         fontSize: 15,
         fontWeight: "700",
         letterSpacing: 2,
     },
-
     footer: {
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
         paddingTop: 28,
     },
-
     footerText: {
         fontSize: 14,
         color: "rgba(255, 255, 255, 0.72)",
     },
-
     footerLink: {
         fontSize: 14,
         fontWeight: "700",
         color: "#FFFFFF",
         textDecorationLine: "underline",
     },
-
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.5)",
@@ -575,7 +590,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 28,
     },
-
     modalCard: {
         backgroundColor: "#fff",
         borderRadius: 20,
@@ -587,7 +601,6 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 12,
     },
-
     modalTitle: {
         fontSize: 17,
         color: PRIMARY,
@@ -595,13 +608,11 @@ const styles = StyleSheet.create({
         marginBottom: 14,
         fontWeight: "600",
     },
-
     modalDivider: {
         height: 1,
         backgroundColor: "#e0f2f1",
         marginBottom: 16,
     },
-
     modalDescription: {
         fontSize: 14,
         color: "#555",
@@ -609,7 +620,6 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         marginBottom: 20,
     },
-
     modalInput: {
         backgroundColor: "#f4f4f4",
         borderRadius: BORDER_RADIUS,
@@ -621,26 +631,22 @@ const styles = StyleSheet.create({
         borderColor: "#e0e0e0",
         marginBottom: 16,
     },
-
     modalButton: {
         backgroundColor: PRIMARY,
         borderRadius: BORDER_RADIUS,
         paddingVertical: 14,
         alignItems: "center",
     },
-
     modalButtonText: {
         fontSize: 14,
         color: "#fff",
         fontWeight: "700",
         letterSpacing: 1,
     },
-
     modalCancelButton: {
         paddingVertical: 12,
         alignItems: "center",
     },
-
     modalCancelText: {
         fontSize: 13,
         color: "#888",

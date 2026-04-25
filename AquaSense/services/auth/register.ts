@@ -17,11 +17,8 @@ export async function registerCommonUser(
 ): Promise<void> {
   const { nome, email, cidade, senha } = payload;
 
-
   const credential = await createUserWithEmailAndPassword(auth, email, senha);
   const { uid } = credential.user;
-
-  // Não chama sendEmailVerification aqui — o backend cuida do e-mail customizado
 
   await setDoc(doc(db, "usuarios", uid), {
     uid,
@@ -35,6 +32,105 @@ export async function registerCommonUser(
   });
 }
 
+// ==========================================
+// COLABORADOR
+// ==========================================
+export interface RegisterCollaboratorPayload {
+  nome: string;
+  email: string;
+  organizacao: string;
+  cidade: string;
+  senha: string;
+}
+
+export async function registerCollaboratorUser(
+  payload: RegisterCollaboratorPayload
+): Promise<void> {
+  const { nome, email, organizacao, cidade, senha } = payload;
+
+  const credential = await createUserWithEmailAndPassword(auth, email, senha);
+  const { uid } = credential.user;
+
+  await setDoc(doc(db, "usuarios", uid), {
+    uid,
+    nome: nome.trim(),
+    email: email.toLowerCase().trim(),
+    organizacao: organizacao.trim(),
+    cidade,
+    tipoUsuario: "colaborador",
+    statusConta: "pendente_verificacao",
+    hasSeenTutorial: false,
+    dataCriacao: serverTimestamp(),
+  });
+}
+
+// ==========================================
+// TÉCNICO
+// ==========================================
+export interface RegisterTechnicianPayload {
+  nome: string;
+  email: string;
+  codigoEquipe: string;
+  senha: string;
+}
+
+export async function registerTechnician(
+  payload: RegisterTechnicianPayload
+): Promise<void> {
+  const { nome, email, codigoEquipe, senha } = payload;
+
+  const credential = await createUserWithEmailAndPassword(auth, email, senha);
+  const { uid } = credential.user;
+
+  await setDoc(doc(db, "usuarios", uid), {
+    uid,
+    nome: nome.trim(),
+    email: email.toLowerCase().trim(),
+    codigoEquipe: codigoEquipe.trim().toUpperCase(),
+    tipoUsuario: "tecnico",
+    statusConta: "pendente_verificacao",
+    hasSeenTutorial: false,
+    dataCriacao: serverTimestamp(),
+  });
+}
+
+// ==========================================
+// GESTOR
+// ==========================================
+export interface RegisterGestorPayload {
+  nome: string;
+  email: string;
+  orgao: string;
+  cargo: string;
+  matricula: string;
+  senha: string;
+}
+
+export async function registerGestor(
+  payload: RegisterGestorPayload
+): Promise<void> {
+  const { nome, email, orgao, cargo, matricula, senha } = payload;
+
+  const credential = await createUserWithEmailAndPassword(auth, email, senha);
+  const { uid } = credential.user;
+
+  await setDoc(doc(db, "usuarios", uid), {
+    uid,
+    nome: nome.trim(),
+    email: email.toLowerCase().trim(),
+    orgao: orgao.trim(),
+    cargo: cargo.trim(),
+    matricula: matricula.trim(),
+    tipoUsuario: "gestor",
+    statusConta: "pendente_verificacao",
+    hasSeenTutorial: false,
+    dataCriacao: serverTimestamp(),
+  });
+}
+
+// ==========================================
+// UTILITÁRIOS
+// ==========================================
 export async function syncUserVerificationStatus(): Promise<boolean> {
   const user = auth.currentUser;
   if (!user) throw new Error("Nenhum usuário autenticado.");
@@ -65,5 +161,4 @@ export function parseFirebaseAuthError(code: string): string {
     default:
       return "Ocorreu um erro inesperado. Tente novamente.";
   }
-
 }

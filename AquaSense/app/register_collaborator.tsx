@@ -249,16 +249,26 @@ export default function RegisterCollaborator() {
                 "Cadastro realizado!",
                 `Enviamos um e-mail de verificação para ${email}.\n\nVerifique sua caixa de entrada e confirme seu e-mail para acessar o AquaSense.`,
                 "success",
-                () => router.replace("/awaiting-verification" as any)
+                () => router.replace("/awaiting-verification")
             );
         } catch (err: any) {
             console.log("ERRO COMPLETO:", err);
-            if (err?.code?.startsWith("auth/")) {
+            
+            if (
+                err?.message?.includes("TOO_MANY_ATTEMPTS_TRY_LATER") ||
+                err?.code === "auth/too-many-requests"
+            ) {
+                showAlert(
+                    "Muitas tentativas",
+                    "O Firebase bloqueou temporariamente. Espere alguns minutos e tente novamente.",
+                    "warning"
+                );
+            } else if (err?.code?.startsWith("auth/")) {
                 showAlert("Erro no cadastro", parseFirebaseAuthError(err.code), "error");
             } else {
                 showAlert(
                     "Erro no envio do e-mail",
-                    err?.message ?? "O cadastro foi realizado, mas o e-mail de verificação não pôde ser enviado.",
+                    err?.message ?? "O cadastro foi realizado, mas o e-mail de verificação não pôde ser enviado. Tente novamente.",
                     "warning"
                 );
             }
@@ -290,6 +300,16 @@ export default function RegisterCollaborator() {
                 style={styles.gradient}
             >
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+                {/* BOTÃO VOLTAR */}
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.back()}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <Ionicons name="arrow-back" size={22} color="rgba(255,255,255,0.85)" />
+                </TouchableOpacity>
 
                 <KeyboardAvoidingView
                     style={styles.flex}
@@ -460,7 +480,7 @@ export default function RegisterCollaborator() {
                                     onPress={() => setPasswordInfoVisible(true)}
                                     hitSlop={{ top: 10, bottom: 8, left: 8, right: 8 }}
                                 >
-                                    <Ionicons name="information-circle-outline" size={22} color="#FFFFFF" />
+                                    <Ionicons name="information-circle-outline" size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             </View>
                             <ErrorText message={errors.senha} fontFamily={questrial} />
@@ -498,7 +518,7 @@ export default function RegisterCollaborator() {
                                     onPress={() => setPasswordInfoVisible(true)}
                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                 >
-                                    <Ionicons name="information-circle-outline" size={22} color="#FFFFFF" />
+                                    <Ionicons name="information-circle-outline" size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             </View>
                             <ErrorText message={errors.confirmSenha} fontFamily={questrial} />
@@ -618,7 +638,7 @@ export default function RegisterCollaborator() {
                                 <View key={i} style={styles.infoRow}>
                                     <Ionicons
                                         name="checkmark-circle"
-                                        size={16}
+                                        size={18}
                                         color="#004d48"
                                         style={{ marginRight: 10 }}
                                     />
@@ -670,94 +690,128 @@ const BORDER_RADIUS = 50;
 const styles = StyleSheet.create({
     flex: { flex: 1 },
     gradient: { flex: 1 },
+
+    backButton: {
+        position: "absolute",
+        top: Platform.OS === "android" ? 52 : 60,
+        left: 20,
+        zIndex: 10,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "rgba(255,255,255,0.15)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 36,
-        paddingTop: Platform.OS === "android" ? 48 : 60,
+        paddingTop: Platform.OS === "android" ? 96 : 104,
         paddingBottom: 40,
         alignItems: "center",
     },
-    logoContainer: { marginBottom: 8 },
-    logoImage: { width: 180, height: 180 },
+
+    logoContainer: { marginBottom: 10 },
+
+    logoImage: {
+        width: 180,
+        height: 180,
+    },
+
     title: {
         color: "#fff",
-        fontSize: 17,
+        fontSize: 19,
         fontWeight: "700",
         letterSpacing: 1.5,
         textAlign: "center",
-        marginBottom: 24,
-        lineHeight: 26,
+        marginBottom: 28,
+        lineHeight: 30,
     },
+
     formWrapper: { width: "100%" },
+
     fieldLabel: {
         color: "rgba(255, 255, 255, 0.85)",
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: "600",
-        marginBottom: 5,
+        marginBottom: 6,
+        marginTop: 10,
         marginLeft: 6,
         letterSpacing: 0.3,
     },
+
     input: {
         backgroundColor: "rgba(255, 255, 255, 0.92)",
         borderRadius: BORDER_RADIUS,
-        height: 50,
+        height: 54,
         paddingHorizontal: 20,
-        fontSize: 14,
+        fontSize: 15,
         color: "#6b7a7a",
         borderWidth: 1.5,
         borderColor: "transparent",
-        marginBottom: 2,
+        marginBottom: 3,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 4,
         elevation: 2,
     },
+
     inputError: {
         borderColor: "#ff6b6b",
         backgroundColor: "rgba(255, 255, 255, 0.92)",
     },
+
     errorText: {
         color: "#ffe0e0",
-        fontSize: 11,
+        fontSize: 12,
         marginLeft: 8,
-        marginBottom: 6,
-        marginTop: 1,
+        marginBottom: 4,
+        marginTop: 2,
     },
+
     selectRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         paddingRight: 16,
     },
+
     selectText: {
-        fontSize: 14,
+        fontSize: 15,
         color: "#6b7a7a",
         flex: 1,
     },
+
     placeholderText: {
         color: "rgba(107, 122, 122, 0.6)",
     },
+
     passwordRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 2,
+        marginBottom: 3,
     },
+
     passwordInput: {
         flex: 1,
         marginBottom: 0,
     },
+
     infoIcon: {
-        marginLeft: 10,
+        marginLeft: 12,
         marginTop: -2,
     },
+
     checkboxRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginTop: 8,
-        marginBottom: 20,
+        marginTop: 10,
+        marginBottom: 24,
         marginLeft: 6,
     },
+
     checkbox: {
         width: 18,
         height: 18,
@@ -769,20 +823,23 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginRight: 8,
     },
+
     checkboxChecked: {
         backgroundColor: PRIMARY,
         borderColor: PRIMARY,
     },
+
     checkboxLabel: {
         color: "rgba(255, 255, 255, 0.9)",
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: "700",
         letterSpacing: 1,
     },
+
     button: {
         backgroundColor: "rgba(255, 255, 255, 0.92)",
         borderRadius: BORDER_RADIUS,
-        height: 52,
+        height: 56,
         alignItems: "center",
         justifyContent: "center",
         shadowColor: "#000",
@@ -791,12 +848,14 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
     },
+
     buttonText: {
         color: "#6b7a7a",
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: "700",
         letterSpacing: 2,
     },
+
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.5)",
@@ -804,11 +863,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 28,
     },
+
     modalDivider: {
         height: 1,
         backgroundColor: "#e0f2f1",
         marginBottom: 16,
     },
+
     modalButton: {
         backgroundColor: PRIMARY,
         borderRadius: BORDER_RADIUS,
@@ -816,12 +877,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 8,
     },
+
     modalButtonText: {
         fontSize: 15,
         color: "#FFFFFF",
         fontWeight: "600",
         letterSpacing: 0.3,
     },
+
     cityModal: {
         backgroundColor: "#fff",
         borderRadius: 20,
@@ -835,6 +898,7 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 12,
     },
+
     cityModalTitle: {
         fontSize: 17,
         fontWeight: "600",
@@ -843,6 +907,7 @@ const styles = StyleSheet.create({
         marginBottom: 14,
         paddingHorizontal: 20,
     },
+
     citySearch: {
         marginHorizontal: 16,
         marginBottom: 10,
@@ -850,49 +915,57 @@ const styles = StyleSheet.create({
         backgroundColor: "#f4f4f4",
         paddingHorizontal: 16,
         paddingVertical: 10,
-        fontSize: 13,
+        fontSize: 14,
         color: "#333",
         borderWidth: 1,
         borderColor: "#e0e0e0",
     },
+
     cityList: {
         flexGrow: 0,
         height: 280,
     },
+
     cityItem: {
-        paddingVertical: 14,
+        paddingVertical: 15,
         paddingHorizontal: 22,
     },
+
     cityItemText: {
-        fontSize: 14,
+        fontSize: 15,
         color: "#555",
     },
+
     citySeparator: {
         height: 1,
         backgroundColor: "#f0f0f0",
         marginLeft: 22,
     },
+
     emptyText: {
         textAlign: "center",
         color: "#aaa",
-        fontSize: 13,
+        fontSize: 14,
         paddingVertical: 20,
     },
+
     modalCloseButton: {
         marginHorizontal: 20,
         marginTop: 10,
         marginBottom: 18,
         backgroundColor: PRIMARY,
         borderRadius: BORDER_RADIUS,
-        paddingVertical: 13,
+        paddingVertical: 14,
         alignItems: "center",
     },
+
     modalCloseButtonText: {
         color: "#fff",
         fontWeight: "600",
-        fontSize: 14,
+        fontSize: 15,
         letterSpacing: 0.3,
     },
+
     infoModal: {
         backgroundColor: "#fff",
         borderRadius: 20,
@@ -904,6 +977,7 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 12,
     },
+
     infoModalTitle: {
         fontSize: 17,
         color: PRIMARY,
@@ -911,15 +985,17 @@ const styles = StyleSheet.create({
         marginBottom: 14,
         fontWeight: "600",
     },
+
     infoRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 10,
+        marginBottom: 12,
     },
+
     infoText: {
-        fontSize: 13,
+        fontSize: 14,
         color: "#555",
         flex: 1,
-        lineHeight: 20,
+        lineHeight: 21,
     },
 });

@@ -277,7 +277,7 @@ export default function RegisterCommon() {
             await registerCommonUser({ nome, email, cidade, senha });
             await sendVerificationEmail({ nome, email });
 
-            // Substituímos o Alert nativo pelo CustomAlert para uniformidade iOS/Android
+            
             showAlert(
                 "Cadastro realizado!",
                 `Enviamos um e-mail de verificação para ${email}.\n\nVerifique sua caixa de entrada e confirme seu e-mail para acessar o AquaSense.`,
@@ -339,10 +339,7 @@ export default function RegisterCommon() {
                     backgroundColor="transparent"
                 />
 
-                {/* ── BOTÃO DE VOLTAR ─────────────────────────────────────────────────
-                    Necessário especialmente no Android, onde não existe o swipe-back
-                    nativo como no iOS. Posicionado em absolute para não empurrar layout.
-                ──────────────────────────────────────────────────────────────────── */}
+                
                 <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => router.back()}
@@ -753,9 +750,7 @@ const styles = StyleSheet.create({
     flex: { flex: 1 },
     gradient: { flex: 1 },
 
-    // ── Botão de voltar ──────────────────────────────────────────────────────
-    // position: absolute para não afetar o layout do ScrollView.
-    // O paddingTop compensa a StatusBar em Android (translucent).
+    
     backButton: {
         position: "absolute",
         top: Platform.OS === "android" ? 52 : 60,
@@ -772,7 +767,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 36,
-        // Aumentamos o paddingTop para dar espaço ao botão de voltar
         paddingTop: Platform.OS === "android" ? 96 : 104,
         paddingBottom: 40,
         alignItems: "center",

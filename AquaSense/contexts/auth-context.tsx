@@ -1,5 +1,3 @@
-// context/AuthContext.tsx
-//
 // Contexto global de autenticação e perfil do usuário.
 // Inclui o ID do último corpo hídrico acessado para que a Home
 // possa reagir imediatamente sem precisar refazer consulta ao Firestore.
@@ -39,7 +37,7 @@ export interface UserProfile {
      */
     ultimoCorpoHidricoAcessadoId?: string;
 
-    /** Timestamp ISO ou Firestore Timestamp — usado para exibir "acessado há X" */
+    
     ultimoCorpoHidricoAcessadoEm?: any;
 }
 

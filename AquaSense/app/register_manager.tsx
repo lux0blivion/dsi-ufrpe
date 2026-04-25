@@ -21,14 +21,6 @@ import { db } from "../config/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 
-// ---------------------------------------------------------------------------
-// NOTA SOBRE FONTE (para equipe):
-// A fonte Questrial renderiza de forma diferente entre iOS e Android quando o
-// texto está em CAPS LOCK — no Android os caracteres ficam mais condensados e
-// o espaçamento entre letras varia. Isso é comportamento nativo do sistema de
-// renderização de texto (Skia no Android vs CoreText no iOS) e não tem solução
-// simples sem trocar a fonte. Por ora mantemos assim e deixamos documentado.
-// ---------------------------------------------------------------------------
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 interface FormErrors {
@@ -99,10 +91,7 @@ function ErrorText({ message, fontFamily }: { message?: string; fontFamily?: str
     return <Text style={[styles.errorText, { fontFamily }]}>{message}</Text>;
 }
 
-// ---------------------------------------------------------------------------
-// CustomAlert — substitui Alert nativo para visual uniforme iOS/Android.
-// O Alert padrão no Android é muito quadrado e visualmente inconsistente.
-// ---------------------------------------------------------------------------
+
 interface CustomAlertProps {
     visible: boolean;
     title: string;
@@ -359,11 +348,7 @@ export default function RegisterGestor() {
             >
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-                {/* ── BOTÃO DE VOLTAR (Android only) ──────────────────────────────────
-                    No iOS o swipe-back nativo já cobre esse caso.
-                    No Android não existe gesto equivalente, então adicionamos o botão.
-                    position: absolute para não interferir no layout do ScrollView.
-                ─────────────────────────────────────────────────────────────────── */}
+                
                 {Platform.OS === "android" && (
                     <TouchableOpacity
                         style={styles.backButton}
@@ -663,7 +648,7 @@ export default function RegisterGestor() {
                     </Pressable>
                 </Modal>
 
-                {/* CUSTOM ALERT — substitui Alert nativo, igual em iOS e Android */}
+                
                 <CustomAlert
                     visible={alertVisible}
                     title={alertConfig.title}
@@ -686,10 +671,10 @@ const styles = StyleSheet.create({
     flex: { flex: 1 },
     gradient: { flex: 1 },
 
-    // Botão de voltar — Android only, position absolute para não afetar layout
+    
     backButton: {
         position: "absolute",
-        top: 52, // compensa StatusBar translucente no Android
+        top: 52, 
         left: 20,
         zIndex: 10,
         width: 36,
@@ -703,7 +688,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 36,
-        // Android ganha paddingTop extra para o conteúdo não ficar atrás do botão de voltar
         paddingTop: Platform.OS === "android" ? 96 : 60,
         paddingBottom: 40,
         alignItems: "center",

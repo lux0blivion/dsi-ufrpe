@@ -37,7 +37,7 @@ export default function PerfilScreen() {
   const [rios, setRios]               = useState<string[]>([]);
   const [observacoes, setObservacoes] = useState<{ total: number; rios: string[] }>({ total: 0, rios: [] });
 
-  // ── Lógica de dados (do código atual — INTOCADA) ──────────────────────────
+  
   const maskEmail = (email: string) => {
     if (!email) return '';
     const [user, domain] = email.split('@');
@@ -91,8 +91,7 @@ export default function PerfilScreen() {
 
     return () => unsubscribe();
   }, []);
-  // ─────────────────────────────────────────────────────────────────────────
-
+  
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -150,7 +149,7 @@ export default function PerfilScreen() {
             </View>
           </SafeAreaView>
 
-          {/* Onda branca — igual à Home */}
+          
           <View style={styles.waveWhite} />
         </LinearGradient>
 
@@ -306,7 +305,7 @@ export default function PerfilScreen() {
   );
 }
 
-// ── Estilos ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFFFFF' },
 

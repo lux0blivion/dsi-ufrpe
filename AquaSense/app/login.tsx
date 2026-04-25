@@ -165,7 +165,7 @@ export default function Login() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        {/* ── GRUPO 1: logo + título ── */}
+                        
                         <Animated.View
                             style={{
                                 opacity: logoFade,
@@ -186,7 +186,7 @@ export default function Login() {
                             </Text>
                         </Animated.View>
 
-                        {/* ── GRUPO 2: formulário + footer ── */}
+                        
                         <Animated.View
                             style={{
                                 opacity: formFade,
@@ -286,7 +286,7 @@ export default function Login() {
                     </ScrollView>
                 </KeyboardAvoidingView>
 
-                {/* MODAL RECUPERAÇÃO DE SENHA */}
+                
                 <Modal
                     visible={forgotModalVisible}
                     transparent

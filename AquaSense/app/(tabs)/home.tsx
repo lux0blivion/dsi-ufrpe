@@ -1,17 +1,3 @@
-// app/(tabs)/index.tsx  (HomeComum)
-//
-// SEPARAÇÃO DE RESPONSABILIDADES:
-//   - UltimoCorpoCard (Home): resumo visual — nome, localização, qualidade,
-//     dois mini-blocos lado a lado (Médias / Parâmetros Técnicos), botão pequeno.
-//   - Modal do Mapa: inspeção completa — cor, odor, lixo, ficha técnica, etc.
-//
-// O que foi REMOVIDO do card da Home em relação à versão anterior:
-//   ✗ Cor da água, odor, lixo/resíduos
-//   ✗ Lista detalhada de atributos
-//   ✗ "Baseado em N observações"
-//   ✗ Descrição institucional do corpo hídrico
-//   ✗ Botão full-width grande
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View,
@@ -293,8 +279,6 @@ function WelcomeCard({ userName, fontFamily }: { userName: string; fontFamily?: 
 
 // ─────────────────────────────────────────────
 // CARD: RESUMO DO ÚLTIMO CORPO HÍDRICO
-//
-// Versão propositalmente enxuta — não reutiliza nenhuma lógica
 // visual do modal de detalhes do mapa.
 //
 // Estrutura:

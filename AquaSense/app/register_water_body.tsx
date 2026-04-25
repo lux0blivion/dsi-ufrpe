@@ -1,9 +1,3 @@
-// app/register_water_body.tsx
-// Corrigido nesta versão:
-//  - Título do header agora em branco (#FFFFFF) explicitamente em todos os lugares
-//  - Safe Area do modal de mapa picker corrigida via useSafeAreaInsets
-//  - Nenhuma outra mudança visual ou de comportamento
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, Modal,
@@ -742,7 +736,7 @@ const styles = StyleSheet.create({
   headerSafeArea: { paddingBottom: 14 },
   headerRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 14 },
   backButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.15)", alignItems: "center", justifyContent: "center", marginRight: 12 },
-  // CORREÇÃO: color explicitamente branco no estilo base
+
   headerTitle: { flex: 1, fontSize: 18, color: "#FFFFFF", fontWeight: "700", letterSpacing: 0.2 },
   headerSpacer: { width: 36 },
 

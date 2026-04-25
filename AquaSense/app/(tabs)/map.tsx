@@ -1,5 +1,3 @@
-// app/(tabs)/map.tsx
-//
 // COMO O MAPA ATUALIZA O ESTADO DO USUÁRIO:
 //
 // Quando o usuário abre o modal de um corpo hídrico (abrirDetalhes),
@@ -137,7 +135,7 @@ export default function MapaScreen() {
   // Controla se o foco automático (via focusCorpoId) já foi executado
   const focusHandled = useRef(false);
 
-  // Bottom sheet drag
+ 
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const sheetHeightValue = useRef(SHEET_COLLAPSED);
   const lastGestureDy = useRef(0);
@@ -328,7 +326,7 @@ export default function MapaScreen() {
     if (detalhe.tipo === 'corpoHidrico') {
       const id = detalhe.dado?.id;
 
-      // Registra o último corpo acessado no AuthContext (memória + Firestore)
+      // Registra o último corpo acessado no auth-context (memória + Firestore)
       if (id) {
         setLastWaterBody(id);
       }

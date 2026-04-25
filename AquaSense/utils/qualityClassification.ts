@@ -1,4 +1,3 @@
-// utils/qualityClassification.ts
 // Lógica de classificação de qualidade da água a partir de observações agregadas
 
 export interface QualidadeInfo {

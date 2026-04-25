@@ -1,4 +1,3 @@
-// services/firestore/observations.ts
 import {
   collection,
   addDoc,
@@ -60,7 +59,7 @@ export async function salvarObservacao(input: ObservacaoInput): Promise<string> 
  *
  * Se o índice não existir, o Firestore lança um erro com um link direto
  * para criá-lo. Esse link aparece no console após a correção do catch abaixo.
- * Sem o índice, a função retornava [] silenciosamente, causando "Sem dados".
+ 
  */
 export async function buscarObservacoesPorCorpo(
   corpoHidricoId: string,
@@ -76,9 +75,7 @@ export async function buscarObservacoesPorCorpo(
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Observacao));
   } catch (e) {
-    // CORREÇÃO: erro exposto para revelar falha de índice composto ou
-    // qualquer outro problema de leitura. Antes era catch {} sem log,
-    // o que engolia o erro e retornava [] silenciosamente.
+    
     console.error('[buscarObservacoesPorCorpo] Erro ao buscar observações:', e);
     return [];
   }
@@ -134,9 +131,7 @@ export function calcularResumoObservacoes(observacoes: Observacao[]): ResumoObse
   const percentualAnimais =
     semAnimaisNull > 0 ? Math.round((comAnimais / semAnimaisNull) * 100) : null;
 
-  // Score de qualidade
-  // NOTA: animais contribui para percentualAnimais (exibido na UI) mas não
-  // entra no scoreFinal por decisão de produto — altere aqui se quiser incluí-lo.
+  
   let pontosPenalidade = 0;
   let totalCampos = 0;
 

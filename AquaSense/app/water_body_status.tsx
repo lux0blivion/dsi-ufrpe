@@ -1,10 +1,3 @@
-/**
- * Tela exibida imediatamente após o cadastro de um corpo hídrico.
- * Mostra o nome, o selo "Pendente" e a mensagem de revisão pelo gestor.
- *
- * Rota esperada: /water_body_status
- * Parâmetros: nome (string), id (string)
- */
 import React from "react";
 import {
     View,

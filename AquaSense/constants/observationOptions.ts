@@ -1,4 +1,3 @@
-// constants/observationOptions.ts
 // Opções padronizadas compartilhadas entre RegisterObservation e RegisterWaterBody
 
 export const COR_OPTIONS = [

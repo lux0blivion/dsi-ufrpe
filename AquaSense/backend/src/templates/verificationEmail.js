@@ -1,7 +1,3 @@
-/**
- * Separa o template do HTML em um arquivo próprio.
- * Vantagem: fácil de editar sem mexer na lógica de negócio.
- */
 function buildVerificationEmailHtml({ nome, verificationLink }) {
   return `
     <!DOCTYPE html>

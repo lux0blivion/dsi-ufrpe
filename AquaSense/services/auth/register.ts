@@ -1,5 +1,4 @@
 import { createUserWithEmailAndPassword, reload } from "firebase/auth";
-// ↑ removido: sendEmailVerification
 import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
 

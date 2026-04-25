@@ -1,12 +1,3 @@
-// app/register_observation.tsx
-// Versão corrigida:
-//  - Título do header em branco (#FFFFFF)
-//  - Botão "Ver no mapa" navega para /(tabs)/map
-//  - Opções de cor e odor padronizadas com register_water_body
-//  - Validação obrigatória antes do envio
-//  - Feedback visual de sucesso após publicar
-//  - selected.id garantido como documentId real do Firestore (não campo interno)
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -178,9 +169,6 @@ export default function RegisterObservation() {
     try {
       const userId = auth.currentUser?.uid ?? 'anonymous';
       await salvarObservacao({
-        // selected.id é sempre o documentId real do Firestore (d.id).
-        // Este valor deve bater exatamente com o id usado pelo mapa
-        // ao chamar buscarObservacoesPorCorpo(corpoHidricoId).
         corpoHidricoId: selected.id,
         criadoPor: userId,
         cor: form.cor,

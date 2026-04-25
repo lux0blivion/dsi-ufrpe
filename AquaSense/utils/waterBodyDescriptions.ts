@@ -1,4 +1,3 @@
-// utils/waterBodyDescriptions.ts
 // Descrições institucionais fixas por nome de corpo hídrico.
 // Chave: nome normalizado (lowercase, sem acentos).
 // Se não houver correspondência exata, usa a descrição genérica por tipo.

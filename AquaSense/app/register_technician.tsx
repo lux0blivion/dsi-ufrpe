@@ -10,7 +10,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    Alert,
     StatusBar,
     Image,
     Pressable,
@@ -21,14 +20,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { useFonts, Questrial_400Regular } from "@expo-google-fonts/questrial";
 
-// Importe os serviços específicos de técnico
-import { registerTechnician } from "@/services/auth/register"; 
+import { registerTechnician, parseFirebaseAuthError } from "@/services/auth/register";
+import { sendVerificationEmail } from "@/services/emailService";
 import {
     validateName,
     validateEmail,
     validatePassword,
     validateConfirmPassword,
 } from "@/utils/validators";
+
 
 interface FormErrors {
     nome?: string;
@@ -38,10 +38,130 @@ interface FormErrors {
     confirmSenha?: string;
 }
 
+interface CustomAlertProps {
+    visible: boolean;
+    title: string;
+    message: string;
+    buttonLabel?: string;
+    type?: "success" | "error" | "warning";
+    onClose: () => void;
+    fontFamily?: string;
+}
+
+function CustomAlert({
+    visible,
+    title,
+    message,
+    buttonLabel = "Entendi",
+    type = "success",
+    onClose,
+    fontFamily,
+}: CustomAlertProps) {
+    const iconName =
+        type === "success"
+            ? "checkmark-circle"
+            : type === "warning"
+            ? "alert-circle"
+            : "close-circle";
+    const iconColor =
+        type === "success" ? "#1a8c80" : type === "warning" ? "#e6a817" : "#e05252";
+
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
+            statusBarTranslucent
+        >
+            <Pressable style={alertStyles.overlay} onPress={onClose}>
+                <Pressable style={alertStyles.box} onPress={(e) => e.stopPropagation()}>
+                    <View style={alertStyles.iconWrapper}>
+                        <Ionicons name={iconName as any} size={48} color={iconColor} />
+                    </View>
+                    <Text style={[alertStyles.title, { fontFamily }]}>{title}</Text>
+                    <View style={alertStyles.divider} />
+                    <Text style={[alertStyles.message, { fontFamily }]}>{message}</Text>
+                    <TouchableOpacity
+                        style={alertStyles.button}
+                        onPress={onClose}
+                        activeOpacity={0.85}
+                    >
+                        <Text style={[alertStyles.buttonText, { fontFamily }]}>
+                            {buttonLabel}
+                        </Text>
+                    </TouchableOpacity>
+                </Pressable>
+            </Pressable>
+        </Modal>
+    );
+}
+
+const alertStyles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.52)",
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 32,
+    },
+    box: {
+        backgroundColor: "#fff",
+        borderRadius: 24,
+        width: "100%",
+        paddingHorizontal: 28,
+        paddingTop: 32,
+        paddingBottom: 24,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 24,
+        elevation: 16,
+    },
+    iconWrapper: { marginBottom: 14 },
+    title: {
+        fontSize: 17,
+        fontWeight: "700",
+        color: "#004d48",
+        textAlign: "center",
+        marginBottom: 14,
+        letterSpacing: 0.2,
+    },
+    divider: {
+        width: "100%",
+        height: 1,
+        backgroundColor: "#e0f2f1",
+        marginBottom: 14,
+    },
+    message: {
+        fontSize: 14,
+        color: "#555",
+        textAlign: "center",
+        lineHeight: 22,
+        marginBottom: 24,
+    },
+    button: {
+        backgroundColor: "#004d48",
+        borderRadius: 50,
+        paddingVertical: 14,
+        paddingHorizontal: 40,
+        alignItems: "center",
+        width: "100%",
+    },
+    buttonText: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "600",
+        letterSpacing: 0.4,
+    },
+});
+
+
 export default function RegisterTechnician() {
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
-    const [codigoEquipe, setCodigoEquipe] = useState(""); 
+    const [codigoEquipe, setCodigoEquipe] = useState("");
     const [senha, setSenha] = useState("");
     const [confirmSenha, setConfirmSenha] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -50,8 +170,31 @@ export default function RegisterTechnician() {
 
     const [passwordInfoVisible, setPasswordInfoVisible] = useState(false);
 
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{
+        title: string;
+        message: string;
+        type: "success" | "error" | "warning";
+        onClose?: () => void;
+    }>({ title: "", message: "", type: "success" });
+
+    function showAlert(
+        title: string,
+        message: string,
+        type: "success" | "error" | "warning" = "error",
+        onClose?: () => void
+    ) {
+        setAlertConfig({ title, message, type, onClose });
+        setAlertVisible(true);
+    }
+
+    function handleAlertClose() {
+        setAlertVisible(false);
+        alertConfig.onClose?.();
+    }
+
     const emailRef = useRef<TextInput>(null);
-    const codigoEquipeRef = useRef<TextInput>(null); 
+    const codigoEquipeRef = useRef<TextInput>(null);
     const senhaRef = useRef<TextInput>(null);
     const confirmRef = useRef<TextInput>(null);
 
@@ -62,7 +205,7 @@ export default function RegisterTechnician() {
         switch (field) {
             case "nome": return validateName(nome);
             case "email": return validateEmail(email);
-            case "codigoEquipe": return codigoEquipe.trim().length < 3 ? "Informe um código válido" : null;
+            case "codigoEquipe": return codigoEquipe.trim().length < 3 ? "Informe o código da sua equipe" : null;
             case "senha": return validatePassword(senha);
             case "confirmSenha": return validateConfirmPassword(senha, confirmSenha);
             default: return null;
@@ -91,20 +234,38 @@ export default function RegisterTechnician() {
 
         setLoading(true);
         try {
-            await registerTechnician({ 
-                nome, 
-                email, 
-                senha,
-                codigoEquipe 
-            });
+            await registerTechnician({ nome, email, senha, codigoEquipe });
+            
+            // Chama a verificação padrão de e-mail usada no sistema
+            await sendVerificationEmail({ nome, email });
 
-            Alert.alert(
+            showAlert(
                 "Cadastro de Técnico!",
                 `Enviamos um e-mail de verificação para ${email}.\n\nConfirme para liberar seu acesso ao AquaSense.`,
-                [{ text: "Entendi", onPress: () => router.back() }]
+                "success",
+                () => router.replace("/awaiting-verification" as any)
             );
         } catch (err: any) {
-            Alert.alert("Erro no cadastro", `${err?.code ?? "Erro desconhecido"}`);
+            console.log("ERRO COMPLETO:", err);
+            
+            if (
+                err?.message?.includes("TOO_MANY_ATTEMPTS_TRY_LATER") ||
+                err?.code === "auth/too-many-requests"
+            ) {
+                showAlert(
+                    "Muitas tentativas",
+                    "O Firebase bloqueou temporariamente. Espere alguns minutos e tente novamente.",
+                    "warning"
+                );
+            } else if (err?.code?.startsWith("auth/")) {
+                showAlert("Erro no cadastro", parseFirebaseAuthError(err.code), "error");
+            } else {
+                showAlert(
+                    "Erro no envio do e-mail",
+                    err?.message ?? "O cadastro foi realizado, mas o e-mail de verificação não pôde ser enviado. Tente novamente.",
+                    "warning"
+                );
+            }
         } finally {
             setLoading(false);
         }
@@ -116,9 +277,21 @@ export default function RegisterTechnician() {
 
             <LinearGradient
                 colors={["#004d48", "#1a8c80", "#3ff3e7"]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
                 style={styles.gradient}
             >
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+                {/* BOTÃO VOLTAR */}
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.back()}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <Ionicons name="arrow-back" size={22} color="rgba(255,255,255,0.85)" />
+                </TouchableOpacity>
 
                 <KeyboardAvoidingView
                     style={styles.flex}
@@ -139,19 +312,32 @@ export default function RegisterTechnician() {
                         </View>
 
                         <Text style={[styles.title, { fontFamily: questrial }]}>
-                            CADASTRO DE{"\n"}TÉCNICO AQUASENSE
+                            CADASTRE-SE NO{"\n"}AQUASENSE
                         </Text>
 
                         <View style={styles.formWrapper}>
                             {/* NOME */}
                             <FieldLabel label="Seu nome completo:" fontFamily={questrial} />
                             <TextInput
-                                style={[styles.input, { fontFamily: questrial }, errors.nome && styles.inputError]}
+                                style={[
+                                    styles.input,
+                                    { fontFamily: questrial },
+                                    errors.nome ? styles.inputError : null,
+                                ]}
                                 placeholder="Nome..."
                                 placeholderTextColor="rgba(107, 122, 122, 0.6)"
                                 value={nome}
-                                onChangeText={setNome}
+                                onChangeText={(text) => {
+                                    setNome(text);
+                                    if (errors.nome) {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            nome: validateName(text) ?? undefined,
+                                        }));
+                                    }
+                                }}
                                 onBlur={() => handleBlur("nome")}
+                                maxLength={80}
                                 returnKeyType="next"
                                 onSubmitEditing={() => emailRef.current?.focus()}
                             />
@@ -161,14 +347,27 @@ export default function RegisterTechnician() {
                             <FieldLabel label="E-mail profissional:" fontFamily={questrial} />
                             <TextInput
                                 ref={emailRef}
-                                style={[styles.input, { fontFamily: questrial }, errors.email && styles.inputError]}
+                                style={[
+                                    styles.input,
+                                    { fontFamily: questrial },
+                                    errors.email ? styles.inputError : null,
+                                ]}
                                 placeholder="Email..."
                                 placeholderTextColor="rgba(107, 122, 122, 0.6)"
                                 value={email}
+                                onBlur={() => handleBlur("email")}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
-                                onBlur={() => handleBlur("email")}
-                                onChangeText={(t) => setEmail(t.replace(/\s/g, ""))}
+                                onChangeText={(t) => {
+                                    const sanitized = t.replace(/\s/g, "");
+                                    setEmail(sanitized);
+                                    if (errors.email) {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            email: validateEmail(sanitized) ?? undefined,
+                                        }));
+                                    }
+                                }}
                                 returnKeyType="next"
                                 onSubmitEditing={() => codigoEquipeRef.current?.focus()}
                             />
@@ -178,13 +377,26 @@ export default function RegisterTechnician() {
                             <FieldLabel label="Código da Equipe:" fontFamily={questrial} />
                             <TextInput
                                 ref={codigoEquipeRef}
-                                style={[styles.input, { fontFamily: questrial }, errors.codigoEquipe && styles.inputError]}
+                                style={[
+                                    styles.input,
+                                    { fontFamily: questrial },
+                                    errors.codigoEquipe ? styles.inputError : null,
+                                ]}
                                 placeholder="Ex: EQ-01"
                                 placeholderTextColor="rgba(107, 122, 122, 0.6)"
                                 value={codigoEquipe}
-                                onChangeText={setCodigoEquipe}
+                                onChangeText={(text) => {
+                                    setCodigoEquipe(text);
+                                    if (errors.codigoEquipe) {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            codigoEquipe: text.trim().length >= 3 ? undefined : "Informe o código da sua equipe",
+                                        }));
+                                    }
+                                }}
                                 autoCapitalize="characters"
                                 onBlur={() => handleBlur("codigoEquipe")}
+                                maxLength={30}
                                 returnKeyType="next"
                                 onSubmitEditing={() => senhaRef.current?.focus()}
                             />
@@ -206,7 +418,6 @@ export default function RegisterTechnician() {
                                     value={senha}
                                     onChangeText={(text) => {
                                         setSenha(text);
-
                                         if (errors.senha || errors.confirmSenha) {
                                             setErrors((prev) => ({
                                                 ...prev,
@@ -228,11 +439,7 @@ export default function RegisterTechnician() {
                                     onPress={() => setPasswordInfoVisible(true)}
                                     hitSlop={{ top: 10, bottom: 8, left: 8, right: 8 }}
                                 >
-                                    <Ionicons
-                                        name="information-circle-outline"
-                                        size={22}
-                                        color="#FFFFFF"
-                                    />
+                                    <Ionicons name="information-circle-outline" size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             </View>
                             <ErrorText message={errors.senha} fontFamily={questrial} />
@@ -253,7 +460,6 @@ export default function RegisterTechnician() {
                                     value={confirmSenha}
                                     onChangeText={(text) => {
                                         setConfirmSenha(text);
-
                                         if (errors.confirmSenha) {
                                             setErrors((prev) => ({
                                                 ...prev,
@@ -271,11 +477,7 @@ export default function RegisterTechnician() {
                                     onPress={() => setPasswordInfoVisible(true)}
                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                 >
-                                    <Ionicons
-                                        name="information-circle-outline"
-                                        size={22}
-                                        color="#FFFFFF"
-                                    />
+                                    <Ionicons name="information-circle-outline" size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             </View>
                             <ErrorText message={errors.confirmSenha} fontFamily={questrial} />
@@ -286,12 +488,7 @@ export default function RegisterTechnician() {
                                 onPress={() => setShowPassword((v) => !v)}
                                 activeOpacity={0.7}
                             >
-                                <View
-                                    style={[
-                                        styles.checkbox,
-                                        showPassword && styles.checkboxChecked,
-                                    ]}
-                                >
+                                <View style={[styles.checkbox, showPassword && styles.checkboxChecked]}>
                                     {showPassword && (
                                         <Ionicons name="checkmark" size={13} color="#fff" />
                                     )}
@@ -311,37 +508,75 @@ export default function RegisterTechnician() {
                                 {loading ? (
                                     <ActivityIndicator color="#004d48" />
                                 ) : (
-                                    <Text style={[styles.buttonText, { fontFamily: questrial }]}>CADASTRAR</Text>
+                                    <Text style={[styles.buttonText, { fontFamily: questrial }]}>
+                                        CADASTRAR
+                                    </Text>
                                 )}
                             </TouchableOpacity>
                         </View>
                     </ScrollView>
                 </KeyboardAvoidingView>
 
-                {/* MODAL DE INFO DE SENHA */}
-                <Modal visible={passwordInfoVisible} transparent animationType="fade">
+                {/* MODAL INFO SENHA */}
+                <Modal
+                    visible={passwordInfoVisible}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setPasswordInfoVisible(false)}
+                >
                     <Pressable style={styles.modalOverlay} onPress={() => setPasswordInfoVisible(false)}>
                         <Pressable style={styles.infoModal} onPress={(e) => e.stopPropagation()}>
-                            <Text style={[styles.infoModalTitle, { fontFamily: questrial }]}>Critérios da senha</Text>
+                            <Text style={[styles.infoModalTitle, { fontFamily: questrial }]}>
+                                Critérios da senha
+                            </Text>
                             <View style={styles.modalDivider} />
-                            {["Mínimo 8 caracteres", "1 Letra maiúscula", "1 Número", "1 Caractere especial"].map((item, i) => (
+                            {[
+                                "Mínimo de 8 caracteres",
+                                "Pelo menos 1 letra maiúscula",
+                                "Pelo menos 1 número",
+                                "Pelo menos 1 caractere especial (!@#$...)",
+                            ].map((item, i) => (
                                 <View key={i} style={styles.infoRow}>
-                                    <Ionicons name="checkmark-circle" size={16} color="#004d48" style={{ marginRight: 10 }} />
-                                    <Text style={[styles.infoText, { fontFamily: questrial }]}>{item}</Text>
+                                    <Ionicons
+                                        name="checkmark-circle"
+                                        size={18}
+                                        color="#004d48"
+                                        style={{ marginRight: 10 }}
+                                    />
+                                    <Text style={[styles.infoText, { fontFamily: questrial }]}>
+                                        {item}
+                                    </Text>
                                 </View>
                             ))}
-                            <TouchableOpacity style={styles.modalButton} onPress={() => setPasswordInfoVisible(false)}>
-                                <Text style={[styles.modalButtonText, { fontFamily: questrial }]}>Entendi</Text>
+                            <TouchableOpacity
+                                style={styles.modalButton}
+                                onPress={() => setPasswordInfoVisible(false)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={[styles.modalButtonText, { fontFamily: questrial }]}>
+                                    Entendi
+                                </Text>
                             </TouchableOpacity>
                         </Pressable>
                     </Pressable>
                 </Modal>
+
+                {/* CUSTOM ALERT */}
+                <CustomAlert
+                    visible={alertVisible}
+                    title={alertConfig.title}
+                    message={alertConfig.message}
+                    type={alertConfig.type}
+                    onClose={handleAlertClose}
+                    fontFamily={questrial}
+                />
+
             </LinearGradient>
         </>
     );
 }
 
-// Sub-componentes
+
 function FieldLabel({ label, fontFamily }: { label: string; fontFamily?: string }) {
     return <Text style={[styles.fieldLabel, { fontFamily }]}>{label}</Text>;
 }
@@ -351,82 +586,221 @@ function ErrorText({ message, fontFamily }: { message?: string; fontFamily?: str
     return <Text style={[styles.errorText, { fontFamily }]}>{message}</Text>;
 }
 
+
 const PRIMARY = "#004d48";
 const BORDER_RADIUS = 50;
 
 const styles = StyleSheet.create({
     flex: { flex: 1 },
     gradient: { flex: 1 },
+
+    backButton: {
+        position: "absolute",
+        top: Platform.OS === "android" ? 52 : 60,
+        left: 20,
+        zIndex: 10,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "rgba(255,255,255,0.15)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 36,
-        paddingTop: Platform.OS === "android" ? 48 : 60,
+        paddingTop: Platform.OS === "android" ? 96 : 104,
         paddingBottom: 40,
         alignItems: "center",
     },
-    logoContainer: { marginBottom: 8 },
-    logoImage: { width: 180, height: 180 },
+
+    logoContainer: { marginBottom: 10 },
+
+    logoImage: {
+        width: 180,
+        height: 180,
+    },
+
     title: {
         color: "#fff",
-        fontSize: 17,
+        fontSize: 19,
         fontWeight: "700",
         letterSpacing: 1.5,
         textAlign: "center",
-        marginBottom: 24,
-        lineHeight: 26,
+        marginBottom: 28,
+        lineHeight: 30,
     },
+
     formWrapper: { width: "100%" },
+
     fieldLabel: {
         color: "rgba(255, 255, 255, 0.85)",
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: "600",
-        marginBottom: 5,
+        marginBottom: 6,
+        marginTop: 10,
         marginLeft: 6,
+        letterSpacing: 0.3,
     },
+
     input: {
         backgroundColor: "rgba(255, 255, 255, 0.92)",
         borderRadius: BORDER_RADIUS,
-        height: 50,
+        height: 54,
         paddingHorizontal: 20,
-        fontSize: 14,
+        fontSize: 15,
         color: "#6b7a7a",
         borderWidth: 1.5,
         borderColor: "transparent",
-        marginBottom: 2,
+        marginBottom: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    inputError: { borderColor: "#ff6b6b" },
-    errorText: { color: "#ffe0e0", fontSize: 11, marginLeft: 8, marginBottom: 6 },
-    passwordRow: { flexDirection: "row", alignItems: "center", marginBottom: 2 },
-    passwordInput: { flex: 1, marginBottom: 0 },
-    infoIcon: { marginLeft: 10, marginTop: -2 },
-    checkboxRow: { flexDirection: "row", alignItems: "center", marginTop: 8, marginBottom: 20, marginLeft: 6 },
+
+    inputError: {
+        borderColor: "#ff6b6b",
+        backgroundColor: "rgba(255, 255, 255, 0.92)",
+    },
+
+    errorText: {
+        color: "#ffe0e0",
+        fontSize: 12,
+        marginLeft: 8,
+        marginBottom: 4,
+        marginTop: 2,
+    },
+
+    passwordRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 3,
+    },
+
+    passwordInput: {
+        flex: 1,
+        marginBottom: 0,
+    },
+
+    infoIcon: {
+        marginLeft: 12,
+        marginTop: -2,
+    },
+
+    checkboxRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 10,
+        marginBottom: 24,
+        marginLeft: 6,
+    },
+
     checkbox: {
         width: 18,
         height: 18,
         borderRadius: 4,
         borderWidth: 1.5,
         borderColor: "rgba(255, 255, 255, 0.75)",
+        backgroundColor: "rgba(255, 255, 255, 0.15)",
         alignItems: "center",
         justifyContent: "center",
         marginRight: 8,
     },
-    checkboxChecked: { backgroundColor: PRIMARY, borderColor: PRIMARY },
-    checkboxLabel: { color: "rgba(255, 255, 255, 0.9)", fontSize: 11, fontWeight: "700", letterSpacing: 1 },
+
+    checkboxChecked: {
+        backgroundColor: PRIMARY,
+        borderColor: PRIMARY,
+    },
+
+    checkboxLabel: {
+        color: "rgba(255, 255, 255, 0.9)",
+        fontSize: 12,
+        fontWeight: "700",
+        letterSpacing: 1,
+    },
+
     button: {
         backgroundColor: "rgba(255, 255, 255, 0.92)",
         borderRadius: BORDER_RADIUS,
-        height: 52,
+        height: 56,
         alignItems: "center",
         justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
         elevation: 4,
     },
-    buttonText: { color: "#6b7a7a", fontSize: 15, fontWeight: "700", letterSpacing: 2 },
-    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", paddingHorizontal: 28 },
-    modalDivider: { height: 1, backgroundColor: "#e0f2f1", marginBottom: 16 },
-    infoModal: { backgroundColor: "#fff", borderRadius: 20, padding: 28, width: "100%" },
-    infoModalTitle: { fontSize: 17, color: PRIMARY, textAlign: "center", marginBottom: 14, fontWeight: "600" },
-    infoRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-    infoText: { fontSize: 13, color: "#555", flex: 1 },
-    modalButton: { backgroundColor: PRIMARY, borderRadius: BORDER_RADIUS, paddingVertical: 14, alignItems: "center", marginTop: 8 },
-    modalButtonText: { color: "#FFFFFF", fontWeight: "600" },
+
+    buttonText: {
+        color: "#6b7a7a",
+        fontSize: 16,
+        fontWeight: "700",
+        letterSpacing: 2,
+    },
+
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 28,
+    },
+
+    modalDivider: {
+        height: 1,
+        backgroundColor: "#e0f2f1",
+        marginBottom: 16,
+    },
+
+    modalButton: {
+        backgroundColor: PRIMARY,
+        borderRadius: BORDER_RADIUS,
+        paddingVertical: 14,
+        alignItems: "center",
+        marginTop: 8,
+    },
+
+    modalButtonText: {
+        fontSize: 15,
+        color: "#FFFFFF",
+        fontWeight: "600",
+        letterSpacing: 0.3,
+    },
+
+    infoModal: {
+        backgroundColor: "#fff",
+        borderRadius: 20,
+        padding: 28,
+        width: "100%",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.18,
+        shadowRadius: 20,
+        elevation: 12,
+    },
+
+    infoModalTitle: {
+        fontSize: 17,
+        color: PRIMARY,
+        textAlign: "center",
+        marginBottom: 14,
+        fontWeight: "600",
+    },
+
+    infoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+
+    infoText: {
+        fontSize: 14,
+        color: "#555",
+        flex: 1,
+        lineHeight: 21,
+    },
 });

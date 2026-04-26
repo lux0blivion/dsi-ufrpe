@@ -115,7 +115,7 @@ export default function ReportComplaint() {
       
       // =========================================================================
       // TO DO: INTEGRAR COM O FIREBASE AQUI
-      // Crie o arquivo @/services/firestore/complaints.ts com uma função:
+      // Criar o arquivo @/services/firestore/complaints.ts com uma função:
       // export async function salvarDenuncia(dados: any) {
       //    return await addDoc(collection(db, 'denuncias'), { ...dados, data: serverTimestamp() });
       // }
